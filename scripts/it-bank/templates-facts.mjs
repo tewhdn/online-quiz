@@ -265,7 +265,6 @@ function officeFactQuestions(out) {
   out.push(choice(CAT.office, ['文字处理', 'Word'], 2, '在 Word 中，要强制从当前位置开始新的一页，应插入？', '分页符', ['分节符', '换行符', '制表符'], '分页符用于强制分页，快捷键为 Ctrl+Enter。'));
   out.push(choice(CAT.office, ['文字处理', 'Word'], 2, 'Word 中用于统一设置文档各级标题格式的功能是？', '样式', ['格式刷', '页眉', '批注'], '样式可统一管理标题、正文等格式，便于生成目录。'));
   out.push(choice(CAT.office, ['文字处理', 'Word'], 2, 'Word 文档中，页眉和页脚通常用于放置？', '页码、文档标题等重复信息', ['正文段落', '图片说明', '脚注内容'], '页眉页脚位于页面上下边距区域，常用于页码、标题等。'));
-  out.push(choice(CAT.office, ['电子表格', 'Excel'], 2, 'Excel 中一个工作簿默认包含多少个工作表？', '1 个', ['2 个', '3 个', '无限个'], '新建工作簿默认包含 1 个工作表（不同版本可能不同，但默认可少于 3 个）。'));
   out.push(choice(CAT.office, ['电子表格', 'Excel'], 2, 'Excel 中要对数据进行分类汇总，首先应做什么？', '按分类字段排序', ['插入图表', '冻结窗格', '设置条件格式'], '分类汇总前需按分类字段排序，使相同类别连续排列。'));
   out.push(choice(CAT.office, ['演示文稿', 'PowerPoint'], 2, 'PowerPoint 中，从第一张幻灯片开始放映的快捷键是？', 'F5', ['Shift+F5', 'Ctrl+F5', 'Alt+F5'], 'F5 从头放映，Shift+F5 从当前幻灯片放映。'));
   out.push(
