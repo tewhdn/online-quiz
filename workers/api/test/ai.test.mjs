@@ -313,3 +313,103 @@ test('重新生成单道题目会更新审核内容', async (t) => {
   const refreshed = expectOk(await admin.get('/api/v1/admin/ai/review-questions?status=pending'));
   assert.match(String(refreshed[0].payload.stem), /重新生成后的新题干/);
 });
+
+test('AI 生成：大批量自动分批，usage 与题目数量正确汇总', async (t) => {
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  const env = buildEnv();
+  const admin = await setupAdmin(env);
+  const questions = Array.from({ length: 10 }, (_, index) =>
+    aiQuestion({ stem: `IPv4 地址长度练习题 ${index + 1}：地址是多少位？` }),
+  );
+  const calls = stubDeepSeek({ questions });
+
+  const result = expectOk(
+    await admin.post('/api/v1/admin/ai/generate', {
+      mode: 'topic',
+      subject: 'AI测试科目',
+      topic: '批量生成测试',
+      count: 15,
+    }),
+    '分批生成',
+  );
+
+  assert.equal(calls.length, 2, '15 道题应按 10 + 5 分两批请求');
+  assert.equal(result.status, 'succeeded');
+  assert.equal(result.generated, 15);
+  assert.equal(result.pendingReview, 15);
+  assert.equal(result.usage.totalTokens, 760);
+
+  const task = expectOk(await admin.get(`/api/v1/admin/ai/tasks/${result.taskId}`));
+  assert.equal(task.task.requestCount, 2);
+  assert.equal(task.task.totalTokens, 760);
+});
+
+test('AI 生成：单批失败时保留其它批次结果并标记 partial', async (t) => {
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  const env = buildEnv();
+  const admin = await setupAdmin(env);
+  const questions = Array.from({ length: 10 }, (_, index) =>
+    aiQuestion({ stem: `分批容错练习题 ${index + 1}：IPv4 地址长度？` }),
+  );
+  let call = 0;
+  globalThis.fetch = async () => {
+    call += 1;
+    if (call === 1) {
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: JSON.stringify({ questions }) } }],
+          usage: { prompt_tokens: 100, completion_tokens: 200, total_tokens: 300 },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: '这不是 JSON' } }], usage: {} }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+  };
+
+  const result = expectOk(
+    await admin.post('/api/v1/admin/ai/generate', {
+      mode: 'topic',
+      subject: 'AI测试科目',
+      topic: '分批失败测试',
+      count: 15,
+    }),
+  );
+
+  assert.equal(result.status, 'partial');
+  assert.equal(result.generated, 10);
+  assert.equal(result.pendingReview, 10);
+  assert.match(String(result.error), /部分批次失败/);
+
+  const task = expectOk(await admin.get(`/api/v1/admin/ai/tasks/${result.taskId}`));
+  assert.equal(task.task.status, 'partial');
+  assert.equal(task.task.requestCount, 2);
+});
+
+test('AI 生成：代码围栏、尾逗号等轻微非法 JSON 可修复', async (t) => {
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  const env = buildEnv();
+  const admin = await setupAdmin(env);
+  stubDeepSeek('```json\n' + JSON.stringify({ questions: [aiQuestion()] }, null, 2).replace(/\n\]\n}$/, ',\n]\n}') + '\n```');
+
+  const result = expectOk(
+    await admin.post('/api/v1/admin/ai/generate', {
+      mode: 'topic',
+      subject: 'AI测试科目',
+      topic: 'JSON 修复测试',
+      count: 1,
+    }),
+  );
+
+  assert.equal(result.status, 'succeeded');
+  assert.equal(result.generated, 1);
+  assert.equal(result.pendingReview, 1);
+});

@@ -6,6 +6,7 @@
 | --- | --- | --- | --- |
 | [Naive UI](https://github.com/tusen-ai/naive-ui) | 2.45.3 | MIT | Vue 3 组件库：菜单、下拉、弹窗、消息、分页、加载、进度、表格、主题 |
 | [Lucide](https://github.com/lucide-icons/lucide) / `@lucide/vue` | 1.61.0 | ISC | 界面图标 |
+| [jsonrepair](https://github.com/josdejong/jsonrepair) | 3.15.0 | ISC | 修复 AI 返回的轻微非法 JSON（尾逗号、未闭合括号等） |
 | [Vue](https://github.com/vuejs/core) | 3.5.44 | MIT | 前端框架 |
 | [Vue Router](https://github.com/vuejs/router) | 4.5.1 | MIT | 路由 |
 | [Pinia](https://github.com/vuejs/pinia) | 3.0.4 | MIT | 状态管理 |

@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair';
 import { ApiError } from '../utils/errors.ts';
 import { newId } from '../utils/id.ts';
 import { nowMs, startOfDay } from '../utils/time.ts';
@@ -102,7 +103,13 @@ function extractJson(text: string): unknown {
   const start = trimmed.indexOf('{');
   const end = trimmed.lastIndexOf('}');
   if (start === -1 || end === -1 || end <= start) throw new Error('响应中找不到 JSON 对象');
-  return JSON.parse(trimmed.slice(start, end + 1));
+  const candidate = trimmed.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    // 模型偶尔会在 JSON 中夹带尾逗号、未闭合括号或被截断；尝试修复后再解析。
+    return JSON.parse(jsonrepair(candidate));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -241,6 +248,52 @@ export async function updateAiSettings(
 // 生成
 // ---------------------------------------------------------------------------
 
+const AI_BATCH_SIZE = 10;
+
+type AiQuestionType = 'single' | 'multiple' | 'boolean';
+
+/**
+ * 将一次生成拆成多个小批次，避免 50 道题在 8000 输出 token 处被截断。
+ * 题型数量按原始总量精确切分；最后一批使用剩余题型，保证总数不丢失。
+ */
+function buildBatches(input: AiGenerateInput): AiGenerateInput[] {
+  if (input.count <= AI_BATCH_SIZE) return [input];
+  const sizes: number[] = [];
+  for (let left = input.count; left > 0; left -= AI_BATCH_SIZE) {
+    sizes.push(Math.min(AI_BATCH_SIZE, left));
+  }
+
+  const sequence: AiQuestionType[] = [];
+  const typeOrder: Array<[AiQuestionType, number]> = [
+    ['single', input.typeCounts.single],
+    ['multiple', input.typeCounts.multiple],
+    ['boolean', input.typeCounts.boolean],
+  ];
+  for (const [type, total] of typeOrder) {
+    for (let i = 0; i < total; i += 1) sequence.push(type);
+  }
+
+  let offset = 0;
+  return sizes.map((size, index) => {
+    const counts = { single: 0, multiple: 0, boolean: 0 };
+    if (sequence.length > 0) {
+      for (let i = offset; i < offset + size; i += 1) {
+        const type = sequence[i];
+        if (type) counts[type] += 1;
+      }
+    }
+    offset += size;
+    return {
+      ...input,
+      count: size,
+      typeCounts: counts,
+      requirement: [input.requirement, `本批为第 ${index + 1}/${sizes.length} 批，请避免与其它批次生成重复题目。`]
+        .filter(Boolean)
+        .join('\n'),
+    };
+  });
+}
+
 export interface GenerateSummary {
   taskId: string;
   status: 'succeeded' | 'partial' | 'failed';
@@ -305,102 +358,91 @@ export async function generateQuestions(
   const startedAt = nowMs();
   await aiRepo.updateAiTask(db, taskId, { status: 'running', startedAt, model: config.deepseekModel });
 
-  const messages = [
-    { role: 'system' as const, content: SYSTEM_PROMPT },
-    { role: 'user' as const, content: buildUserPrompt(input, sourceText) },
-  ];
-
-  let lastError: string | null = null;
-  let content: string | null = null;
-  let usage: DeepSeekUsage | null = null;
+  const batches = buildBatches(input);
+  const batchErrors: string[] = [];
+  const rawQuestions: unknown[] = [];
+  const usageTotals = { prompt: 0, completion: 0, total: 0, seen: false };
   let requestCount = 0;
-  const maxAttempts = 2;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      const result = await callDeepSeek(config, messages, { temperature: input.difficulty === 'hard' ? 0.35 : 0.5 });
-      content = result.content;
-      usage = result.usage;
-      requestCount += result.requestCount;
-      break;
-    } catch (error) {
-      requestCount += 1;
-      lastError = error instanceof Error ? error.message : String(error);
-      if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 402)) break;
-      if (error instanceof ApiError && error.status === 429) break;
+  for (let index = 0; index < batches.length; index += 1) {
+    const batch = batches[index]!;
+    const messages = [
+      { role: 'system' as const, content: SYSTEM_PROMPT },
+      { role: 'user' as const, content: buildUserPrompt(batch, sourceText) },
+    ];
+    const label = batches.length > 1 ? `第 ${index + 1}/${batches.length} 批：` : '';
+    let content: string | null = null;
+    let batchError: string | null = null;
+    let fatal = false;
+
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const result = await callDeepSeek(config, messages, {
+          temperature: input.difficulty === 'hard' ? 0.35 : 0.5,
+        });
+        content = result.content;
+        requestCount += result.requestCount;
+        if (result.usage) {
+          usageTotals.seen = true;
+          usageTotals.prompt += result.usage.prompt_tokens ?? 0;
+          usageTotals.completion += result.usage.completion_tokens ?? 0;
+          usageTotals.total += result.usage.total_tokens ?? 0;
+        }
+        break;
+      } catch (error) {
+        requestCount += 1;
+        batchError = error instanceof Error ? error.message : String(error);
+        if (error instanceof ApiError && [401, 403, 402, 429].includes(error.status)) {
+          fatal = true;
+          break;
+        }
+      }
     }
+
+    if (!content) {
+      batchErrors.push(`${label}${batchError ?? '调用失败'}`);
+      if (fatal) break;
+      continue;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = extractJson(content);
+    } catch {
+      batchErrors.push(`${label}返回内容不是合法 JSON`);
+      continue;
+    }
+
+    const list = Array.isArray((parsed as { questions?: unknown[] }).questions)
+      ? ((parsed as { questions: unknown[] }).questions as unknown[])
+      : Array.isArray(parsed)
+        ? (parsed as unknown[])
+        : [];
+    if (list.length === 0) {
+      batchErrors.push(`${label}未返回题目`);
+      continue;
+    }
+    rawQuestions.push(...list);
+    if (rawQuestions.length >= input.count) break;
   }
 
-  if (!content) {
-    const finishedAt = nowMs();
-    await aiRepo.updateAiTask(db, taskId, {
-      status: 'failed',
-      error: lastError ? lastError.slice(0, 500) : '未知错误',
-      requestCount,
-      attempts: requestCount,
-      finishedAt,
-      durationMs: finishedAt - startedAt,
-    });
-    return {
-      taskId,
-      status: 'failed',
-      requested: input.count,
-      generated: 0,
-      pendingReview: 0,
-      invalid: 0,
-      duplicates: 0,
-      model: config.deepseekModel,
-      usage: { promptTokens: null, completionTokens: null, totalTokens: null },
-      error: lastError ? lastError.slice(0, 500) : 'AI 调用失败',
-      questions: [],
-    };
-  }
+  const usage: DeepSeekUsage | null = usageTotals.seen
+    ? {
+        prompt_tokens: usageTotals.prompt,
+        completion_tokens: usageTotals.completion,
+        total_tokens: usageTotals.total,
+      }
+    : null;
 
-  let parsed: unknown;
-  try {
-    parsed = extractJson(content);
-  } catch {
-    const finishedAt = nowMs();
-    await aiRepo.updateAiTask(db, taskId, {
-      status: 'failed',
-      error: 'AI 返回内容不是合法 JSON，未写入待审核队列',
-      requestCount,
-      attempts: requestCount,
-      finishedAt,
-      durationMs: finishedAt - startedAt,
-      totalTokens: usage?.total_tokens ?? null,
-      promptTokens: usage?.prompt_tokens ?? null,
-      completionTokens: usage?.completion_tokens ?? null,
-    });
-    return {
-      taskId,
-      status: 'failed',
-      requested: input.count,
-      generated: 0,
-      pendingReview: 0,
-      invalid: 0,
-      duplicates: 0,
-      model: config.deepseekModel,
-      usage: {
-        promptTokens: usage?.prompt_tokens ?? null,
-        completionTokens: usage?.completion_tokens ?? null,
-        totalTokens: usage?.total_tokens ?? null,
-      },
-      error: 'AI 返回内容不是合法 JSON，未写入待审核队列',
-      questions: [],
-    };
-  }
-
-  const rawQuestions = Array.isArray((parsed as { questions?: unknown[] }).questions)
-    ? ((parsed as { questions: unknown[] }).questions as unknown[])
-    : Array.isArray(parsed)
-      ? (parsed as unknown[])
-      : [];
   if (rawQuestions.length === 0) {
     const finishedAt = nowMs();
+    const error =
+      batchErrors.length > 0
+        ? `AI 生成失败：${batchErrors.slice(0, 3).join('；')}`.slice(0, 500)
+        : 'AI 未返回任何题目';
     await aiRepo.updateAiTask(db, taskId, {
       status: 'failed',
-      error: 'AI 未返回任何题目',
+      error,
       requestCount,
       attempts: requestCount,
       finishedAt,
@@ -423,10 +465,15 @@ export async function generateQuestions(
         completionTokens: usage?.completion_tokens ?? null,
         totalTokens: usage?.total_tokens ?? null,
       },
-      error: 'AI 未返回任何题目',
+      error,
       questions: [],
     };
   }
+
+  const batchErrorText =
+    batchErrors.length > 0
+      ? `${rawQuestions.length > 0 ? '部分批次失败' : 'AI 生成失败'}：${batchErrors.slice(0, 3).join('；')}`.slice(0, 500)
+      : null;
 
   const limited = rawQuestions.slice(0, input.count);
   const candidateCache = new Map<string, DuplicateCandidate[]>();
@@ -534,7 +581,7 @@ export async function generateQuestions(
 
   const finishedAt = nowMs();
   const status: 'succeeded' | 'partial' | 'failed' =
-    invalidCount === 0 ? 'succeeded' : pendingCount > 0 ? 'partial' : 'failed';
+    pendingCount === 0 ? 'failed' : invalidCount > 0 || batchErrors.length > 0 ? 'partial' : 'succeeded';
   await aiRepo.updateAiTask(db, taskId, {
     status,
     model: config.deepseekModel,
@@ -543,7 +590,7 @@ export async function generateQuestions(
     totalTokens: usage?.total_tokens ?? null,
     requestCount,
     attempts: requestCount,
-    error: lastError ? lastError.slice(0, 500) : null,
+    error: batchErrorText,
     finishedAt,
     durationMs: finishedAt - startedAt,
   });
@@ -553,7 +600,15 @@ export async function generateQuestions(
     action: 'ai.generate',
     targetType: 'ai_task',
     targetId: taskId,
-    detail: { mode: input.mode, requested: input.count, generated: limited.length, pending: pendingCount, invalid: invalidCount },
+    detail: {
+      mode: input.mode,
+      requested: input.count,
+      generated: limited.length,
+      pending: pendingCount,
+      invalid: invalidCount,
+      batches: batches.length,
+      batchFailures: batchErrors.length,
+    },
     ipHash,
     now: finishedAt,
   });
@@ -573,7 +628,7 @@ export async function generateQuestions(
       completionTokens: usage?.completion_tokens ?? null,
       totalTokens: usage?.total_tokens ?? null,
     },
-    error: lastError ? lastError.slice(0, 500) : null,
+    error: batchErrorText,
     questions: summaryQuestions,
   };
 }

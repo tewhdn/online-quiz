@@ -128,7 +128,7 @@
 | --- | --- |
 | `npm run check` | 通过（前端 vue-tsc + 后端 tsc） |
 | `npm run build` | 通过；CSS 25.6KB，入口 JS 约 478KB（gzip 147.7KB） |
-| `npm test` | 47 / 47 通过 |
+| `npm test` | 50 / 50 通过 |
 | `npm run security:check` | 通过；扫描 46 个前端产物，未发现密钥或服务端环境变量 |
 | happy-dom 运行时冒烟 | 登录、首页、刷题、考试列表、错题本、个人中心、管理后台/日志均能挂载并输出预期文本 |
 | 真实浏览器截图 | 未完成：容器内 Chromium/Firefox 启动即退出（内核限制）；手机端截图需要无障碍服务，当前未开启 |

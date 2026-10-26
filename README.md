@@ -69,7 +69,7 @@
 
 - 加载真实 `migrations/*.sql`
 - 使用**同一份 Worker 源码**（`src/index.ts` 的 `fetch` 入口）
-- 覆盖认证、权限、判分、考试、AI、导入等 47 项集成测试
+- 覆盖认证、权限、判分、考试、AI、导入等 50 项集成测试
 
 生产部署仍使用标准 Wrangler + D1，见 [docs/DEPLOY.md](docs/DEPLOY.md)。
 
@@ -113,7 +113,7 @@ online-quiz/
 │   ├── migrations/0001_init.sql  # 建表、索引、初始配置
 │   ├── seeds/demo-questions.json # 演示题库（23 题）
 │   ├── seeds/ten-category-it-500.json # 十类信息技术题库（500 题）
-│   ├── test/                     # 47 项自动化测试
+│   ├── test/                     # 50 项自动化测试
 │   ├── wrangler.toml
 │   └── package.json
 ├── scripts/                      # 运维脚本（Node 运行）
@@ -200,7 +200,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/admin/bootstrap \
 | `npm run dev:api` | `wrangler dev`（需要 workerd） |
 | `npm run build` | 构建前端到 `apps/web/dist` |
 | `npm run check` | 前后端 TypeScript 类型检查 |
-| `npm test` | 运行 47 项自动化测试 |
+| `npm test` | 运行 50 项自动化测试 |
 | `npm run seed:demo` | 向本地数据库导入演示题库 |
 | `npm run questions:validate -- 文件` | 校验题库文件 |
 | `npm run questions:import -- 文件 --commit --remote` | 批量导入到 D1 |
@@ -312,7 +312,7 @@ npm test
 - 权限：普通用户访问管理接口、伪造角色、读取答案、跨用户数据隔离
 - 判分：单选/多选（顺序无关）/判断/非法答案、重复提交幂等、客户端伪造分数无效
 - 考试：题目不足报错、试卷不含答案、服务端计时与自动交卷、重复交卷、历史快照
-- AI：合法/非法 JSON、缺失答案、错误题型、默认待审核、每日限额、功能开关、Key 不泄露
+- AI：合法/非法 JSON、轻微 JSON 修复、自动分批、单批失败 partial、缺失答案、错误题型、默认待审核、每日限额、功能开关、Key 不泄露
 - 导入：预览不落库、非法 JSON、缺失字段行号、重复策略（跳过/更新/新建）、CSV、部分失败、不覆盖题库
 
 ---
@@ -340,7 +340,7 @@ npm test
 2. **PDF/DOCX 文本提取为内置轻量实现**：不依赖第三方库；扫描版 PDF、加密 PDF、特殊 CID 字体的 PDF 无法提取时会明确报错并提示 OCR。DOCX 仅读取正文 XML，不包含批注/页眉。
 3. **workerd 本地开发**：部分受限 ARM/Android 容器无法运行 workerd（tcmalloc 内存分配失败）。本项目提供 Node 运行时用于本地验收，生产仍走标准 Wrangler。
 4. **测试方式**：使用 Node + `node:sqlite` 驱动真实 Worker 代码，而非 `vitest-pool-workers`。D1 的 SQL 与事务语义已尽量对齐，但极端并发行为建议在真实 D1 上复测。
-5. **AI 出题为同步请求**：单次最多 50 题，受 Worker 执行时间限制。大批量请分批生成。
+5. **AI 出题为同步请求**：单次最多 50 题；系统会按每批最多 10 题自动拆分并汇总，总耗时随题量增加，仍受 Worker 执行时间限制。
 6. **未在真实 Cloudflare 账号上验证部署**：本仓库交付时无法访问你的 Cloudflare 账号，部署步骤按官方 Wrangler 流程编写；首次部署请按 [docs/DEPLOY.md](docs/DEPLOY.md) 逐项验证。
 7. **软删除策略**：用户与题目均为软删除，历史答题/成绩保留；不提供物理删除入口。
 8. **无 SMTP**：不提供邮件验证与找回密码，忘记密码由管理员重置。
