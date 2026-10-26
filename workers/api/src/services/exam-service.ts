@@ -2,7 +2,7 @@ import { ApiError } from '../utils/errors.ts';
 import { newId } from '../utils/id.ts';
 import { nowMs, secondsBetween } from '../utils/time.ts';
 import { toCsv } from '../utils/csv.ts';
-import { gradeAnswer } from '../validators/question.ts';
+import { gradeAnswer, normalizeBooleanAnswer } from '../validators/question.ts';
 import { validateExamInput, examTotalScore, type ExamInput } from '../validators/exam.ts';
 import * as examRepo from '../repositories/exam-repo.ts';
 import * as questions from '../repositories/question-repo.ts';
@@ -508,10 +508,13 @@ export async function saveExamAnswer(
 
 function normalizeAnswerForSave(type: string, value: unknown): { value: string[]; invalid: boolean } {
   if (type === 'boolean') {
-    if (value === true || value === 'true' || value === '正确') return { value: ['true'], invalid: false };
-    if (value === false || value === 'false' || value === '错误') return { value: ['false'], invalid: false };
-    if (value === undefined || value === null || value === '') return { value: [], invalid: false };
-    return { value: [], invalid: true };
+    // 前端统一提交数组（如 ["true"]）；同时兼容标量 true/false、中文“正确/错误”和数字 1/0。
+    if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+      return { value: [], invalid: false };
+    }
+    const normalized = normalizeBooleanAnswer(value);
+    if (!normalized) return { value: [], invalid: true };
+    return { value: normalized, invalid: false };
   }
   if (value === undefined || value === null || value === '') return { value: [], invalid: false };
   const list = Array.isArray(value) ? value : String(value).split(/[,，|]/);

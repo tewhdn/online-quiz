@@ -228,3 +228,37 @@ test('编辑考试时题目不足不会留下半更新状态', async () => {
   assert.equal(detail.exam.totalQuestions, 3);
   assert.equal(detail.questions.length, 3, '原试卷不应被破坏');
 });
+
+test('考试保存判断题：接受前端数组格式并正确判分', async () => {
+  const env = buildEnv();
+  const admin = await setupAdmin(env);
+  await createQuestion(admin, {
+    subject: '判断保存考试',
+    stem: 'IPv4 地址长度是 32 位。',
+    type: 'boolean',
+    options: [],
+    answer: ['true'],
+    explanation: 'IPv4 地址长度为 32 位。',
+  });
+  const exam = await createExam(admin, {
+    subject: '判断保存考试',
+    typeCounts: { single: 0, multiple: 0, boolean: 1 },
+    scoreBoolean: 2,
+  });
+  const code = await createInvite(admin);
+  const { client: user } = await registerUser(env, code, 'boolean_save_user', 'BoolPass123');
+  const paper = expectOk(await user.post(`/api/v1/exams/${exam.id}/start`, {}));
+  const boolean = paper.questions.find((item) => item.type === 'boolean');
+  assert.ok(boolean);
+
+  // 前端 QuestionOptions 提交的是数组；旧逻辑只接受标量，会误报“答案格式不正确”
+  expectOk(
+    await user.put(`/api/v1/exam-attempts/${paper.attempt.id}/answers/${boolean.id}`, { answer: ['true'] }),
+    '保存判断题数组答案',
+  );
+
+  const result = expectOk(await user.post(`/api/v1/exam-attempts/${paper.attempt.id}/submit`, {}));
+  assert.equal(result.attempt.score, 2);
+  assert.equal(result.attempt.correctCount, 1);
+  assert.equal(result.summary.byType.boolean.correct, 1);
+});

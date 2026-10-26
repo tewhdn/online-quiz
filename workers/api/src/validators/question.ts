@@ -137,7 +137,7 @@ function normalizeOptions(raw: unknown, errors: string[]): QuestionOption[] {
   return options;
 }
 
-function normalizeBooleanAnswer(value: unknown): string[] | null {
+export function normalizeBooleanAnswer(value: unknown): string[] | null {
   if (Array.isArray(value)) {
     if (value.length !== 1) return null;
     return normalizeBooleanAnswer(value[0]);

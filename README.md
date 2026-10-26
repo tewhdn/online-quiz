@@ -69,7 +69,7 @@
 
 - 加载真实 `migrations/*.sql`
 - 使用**同一份 Worker 源码**（`src/index.ts` 的 `fetch` 入口）
-- 覆盖认证、权限、判分、考试、AI、导入等 50 项集成测试
+- 覆盖认证、权限、判分、考试、AI、导入等 51 项集成测试
 
 生产部署仍使用标准 Wrangler + D1，见 [docs/DEPLOY.md](docs/DEPLOY.md)。
 
@@ -113,7 +113,7 @@ online-quiz/
 │   ├── migrations/0001_init.sql  # 建表、索引、初始配置
 │   ├── seeds/demo-questions.json # 演示题库（23 题）
 │   ├── seeds/ten-category-it-500.json # 十类信息技术题库（500 题）
-│   ├── test/                     # 50 项自动化测试
+│   ├── test/                     # 51 项自动化测试
 │   ├── wrangler.toml
 │   └── package.json
 ├── scripts/                      # 运维脚本（Node 运行）
@@ -200,7 +200,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/admin/bootstrap \
 | `npm run dev:api` | `wrangler dev`（需要 workerd） |
 | `npm run build` | 构建前端到 `apps/web/dist` |
 | `npm run check` | 前后端 TypeScript 类型检查 |
-| `npm test` | 运行 50 项自动化测试 |
+| `npm test` | 运行 51 项自动化测试 |
 | `npm run seed:demo` | 向本地数据库导入演示题库 |
 | `npm run questions:validate -- 文件` | 校验题库文件 |
 | `npm run questions:import -- 文件 --commit --remote` | 批量导入到 D1 |
