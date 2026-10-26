@@ -1,0 +1,34 @@
+{
+  "name": "online-quiz",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "在线智能答题系统 - Vue 3 + Cloudflare Workers + D1 + DeepSeek",
+  "workspaces": [
+    "apps/web",
+    "workers/api"
+  ],
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "dev": "npm run dev:local",
+    "dev:local": "node scripts/dev-all.mjs",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:api": "npm run dev -w workers/api",
+    "dev:api:node": "node scripts/dev-server.mjs",
+    "build": "npm run build -w apps/web",
+    "check": "npm run typecheck -w apps/web && npm run typecheck -w workers/api",
+    "test": "node --test workers/api/test/*.test.mjs",
+    "test:watch": "node --test --watch workers/api/test/*.test.mjs",
+    "db:migrate:local": "npm run db:migrate:local -w workers/api",
+    "db:migrate:remote": "npm run db:migrate:remote -w workers/api",
+    "db:reset:local": "npm run db:reset:local -w workers/api",
+    "admin:create": "node scripts/create-admin.mjs",
+    "questions:import": "node scripts/import-questions.mjs",
+    "questions:validate": "node scripts/validate-questions.mjs",
+    "security:check": "node scripts/check-security.mjs",
+    "deploy": "npm run build && npm run deploy -w workers/api",
+    "seed:demo": "node scripts/import-questions.mjs workers/api/seeds/demo-questions.json --commit --sqlite workers/api/.local/quiz.sqlite --status published"
+  }
+}

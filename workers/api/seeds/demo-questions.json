@@ -1,0 +1,372 @@
+{
+  "version": 1,
+  "note": "演示题库：用于本地验收与导入格式示例，不代表任何官方考试原题。",
+  "questions": [
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["IP地址"],
+      "difficulty": 2,
+      "stem": "IPv4 地址由多少位二进制数组成？",
+      "options": [
+        { "key": "A", "text": "16 位" },
+        { "key": "B", "text": "32 位" },
+        { "key": "C", "text": "64 位" },
+        { "key": "D", "text": "128 位" }
+      ],
+      "answer": ["B"],
+      "explanation": "IPv4 地址长度为 32 位，通常写成四段十进制数，每段范围 0-255。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["子网掩码"],
+      "difficulty": 3,
+      "stem": "子网掩码的主要作用是什么？",
+      "options": [
+        { "key": "A", "text": "加密网络数据" },
+        { "key": "B", "text": "区分 IP 地址中的网络号和主机号" },
+        { "key": "C", "text": "提高网络带宽" },
+        { "key": "D", "text": "为域名提供解析" }
+      ],
+      "answer": ["B"],
+      "explanation": "子网掩码与 IP 地址进行按位与运算，从而得到网络号，用于判断主机是否在同一网段。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["私有地址"],
+      "difficulty": 2,
+      "stem": "以下哪个地址属于 IPv4 私有地址？",
+      "options": [
+        { "key": "A", "text": "8.8.8.8" },
+        { "key": "B", "text": "192.168.1.10" },
+        { "key": "C", "text": "202.96.128.86" },
+        { "key": "D", "text": "114.114.114.114" }
+      ],
+      "answer": ["B"],
+      "explanation": "IPv4 私有地址包括 10.0.0.0/8、172.16.0.0/12 和 192.168.0.0/16，其中 192.168.1.10 属于私有地址。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["OSI模型"],
+      "difficulty": 3,
+      "stem": "在 OSI 参考模型中，IP 协议工作在哪一层？",
+      "options": [
+        { "key": "A", "text": "物理层" },
+        { "key": "B", "text": "数据链路层" },
+        { "key": "C", "text": "网络层" },
+        { "key": "D", "text": "传输层" }
+      ],
+      "answer": ["C"],
+      "explanation": "IP 协议负责网络层的寻址与路由转发。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["HTTP"],
+      "difficulty": 1,
+      "stem": "HTTP 协议默认使用的端口号是多少？",
+      "options": [
+        { "key": "A", "text": "21" },
+        { "key": "B", "text": "80" },
+        { "key": "C", "text": "443" },
+        { "key": "D", "text": "3306" }
+      ],
+      "answer": ["B"],
+      "explanation": "HTTP 默认端口为 80，HTTPS 默认端口为 443。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["HTTPS"],
+      "difficulty": 2,
+      "stem": "HTTPS 默认使用的端口号是多少？",
+      "options": [
+        { "key": "A", "text": "80" },
+        { "key": "B", "text": "443" },
+        { "key": "C", "text": "8080" },
+        { "key": "D", "text": "22" }
+      ],
+      "answer": ["B"],
+      "explanation": "HTTPS 在 HTTP 的基础上通过 TLS/SSL 加密，默认端口为 443。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["DNS"],
+      "difficulty": 2,
+      "stem": "DNS 的主要功能是什么？",
+      "options": [
+        { "key": "A", "text": "将域名解析为 IP 地址" },
+        { "key": "B", "text": "为文件分配存储空间" },
+        { "key": "C", "text": "加密网页内容" },
+        { "key": "D", "text": "压缩网络数据" }
+      ],
+      "answer": ["A"],
+      "explanation": "DNS（域名系统）负责把便于记忆的域名解析成对应的 IP 地址。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["TCP", "UDP"],
+      "difficulty": 3,
+      "stem": "与 TCP 相比，UDP 的主要特点是？",
+      "options": [
+        { "key": "A", "text": "面向连接、可靠传输" },
+        { "key": "B", "text": "无连接、开销小、不保证可靠交付" },
+        { "key": "C", "text": "只能用于局域网" },
+        { "key": "D", "text": "必须建立三次握手" }
+      ],
+      "answer": ["B"],
+      "explanation": "UDP 是无连接协议，首部开销小，不保证数据可靠到达，适合实时性要求较高的场景。",
+      "source": "演示题库"
+    },
+    {
+      "type": "multiple",
+      "subject": "计算机基础",
+      "category": "网络设备",
+      "knowledge_points": ["网络设备"],
+      "difficulty": 3,
+      "stem": "以下哪些设备通常工作在 OSI 网络层或更高层？",
+      "options": [
+        { "key": "A", "text": "路由器" },
+        { "key": "B", "text": "三层交换机" },
+        { "key": "C", "text": "集线器" },
+        { "key": "D", "text": "中继器" }
+      ],
+      "answer": ["A", "B"],
+      "explanation": "路由器和三层交换机具备网络层转发能力；集线器和中继器工作在物理层。",
+      "source": "演示题库"
+    },
+    {
+      "type": "multiple",
+      "subject": "计算机基础",
+      "category": "网络设备",
+      "knowledge_points": ["网络设备"],
+      "difficulty": 2,
+      "stem": "以下哪些属于常见的网络互联设备？",
+      "options": [
+        { "key": "A", "text": "路由器" },
+        { "key": "B", "text": "交换机" },
+        { "key": "C", "text": "显示器" },
+        { "key": "D", "text": "键盘" }
+      ],
+      "answer": ["A", "B"],
+      "explanation": "路由器和交换机用于网络互联；显示器和键盘属于计算机外设。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "数据表示",
+      "knowledge_points": ["二进制"],
+      "difficulty": 2,
+      "stem": "二进制数 1010 转换为十进制数是多少？",
+      "options": [
+        { "key": "A", "text": "8" },
+        { "key": "B", "text": "10" },
+        { "key": "C", "text": "12" },
+        { "key": "D", "text": "16" }
+      ],
+      "answer": ["B"],
+      "explanation": "1×2³ + 0×2² + 1×2¹ + 0×2⁰ = 8 + 0 + 2 + 0 = 10。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "数据表示",
+      "knowledge_points": ["存储单位"],
+      "difficulty": 1,
+      "stem": "1 KB 等于多少字节？",
+      "options": [
+        { "key": "A", "text": "1000 字节" },
+        { "key": "B", "text": "1024 字节" },
+        { "key": "C", "text": "512 字节" },
+        { "key": "D", "text": "2048 字节" }
+      ],
+      "answer": ["B"],
+      "explanation": "在计算机中，1 KB = 1024 B（二进制换算）。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "计算机基础知识",
+      "knowledge_points": ["数据表示"],
+      "difficulty": 1,
+      "stem": "计算机中表示数据的最小单位是什么？",
+      "options": [
+        { "key": "A", "text": "字节（Byte）" },
+        { "key": "B", "text": "位（bit）" },
+        { "key": "C", "text": "千字节（KB）" },
+        { "key": "D", "text": "字（Word）" }
+      ],
+      "answer": ["B"],
+      "explanation": "位（bit）是最小的数据单位，1 字节等于 8 位。",
+      "source": "演示题库"
+    },
+    {
+      "type": "multiple",
+      "subject": "计算机基础",
+      "category": "计算机组成",
+      "knowledge_points": ["CPU"],
+      "difficulty": 2,
+      "stem": "CPU 通常由以下哪些部件组成？",
+      "options": [
+        { "key": "A", "text": "运算器" },
+        { "key": "B", "text": "控制器" },
+        { "key": "C", "text": "显示器" },
+        { "key": "D", "text": "硬盘" }
+      ],
+      "answer": ["A", "B"],
+      "explanation": "CPU 主要由运算器和控制器组成，显示器和硬盘属于外部设备。",
+      "source": "演示题库"
+    },
+    {
+      "type": "multiple",
+      "subject": "计算机基础",
+      "category": "操作系统",
+      "knowledge_points": ["操作系统"],
+      "difficulty": 2,
+      "stem": "操作系统的主要功能包括哪些？",
+      "options": [
+        { "key": "A", "text": "进程管理" },
+        { "key": "B", "text": "内存管理" },
+        { "key": "C", "text": "文件管理" },
+        { "key": "D", "text": "编写网页样式" }
+      ],
+      "answer": ["A", "B", "C"],
+      "explanation": "操作系统负责进程、内存、文件、设备等资源管理；网页样式属于前端开发工作。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "数据库",
+      "knowledge_points": ["主键"],
+      "difficulty": 2,
+      "stem": "关系数据库中，主键（Primary Key）的基本要求是什么？",
+      "options": [
+        { "key": "A", "text": "可以为空且可以重复" },
+        { "key": "B", "text": "必须唯一且不能为空" },
+        { "key": "C", "text": "只能用于文本字段" },
+        { "key": "D", "text": "必须由数据库自动生成" }
+      ],
+      "answer": ["B"],
+      "explanation": "主键用于唯一标识一行记录，必须满足唯一性且不能为 NULL。",
+      "source": "演示题库"
+    },
+    {
+      "type": "single",
+      "subject": "计算机基础",
+      "category": "数据库",
+      "knowledge_points": ["SQL"],
+      "difficulty": 1,
+      "stem": "在 SQL 中，用于查询数据的语句是？",
+      "options": [
+        { "key": "A", "text": "SELECT" },
+        { "key": "B", "text": "INSERT" },
+        { "key": "C", "text": "UPDATE" },
+        { "key": "D", "text": "DELETE" }
+      ],
+      "answer": ["A"],
+      "explanation": "SELECT 用于查询；INSERT、UPDATE、DELETE 分别用于新增、更新和删除。",
+      "source": "演示题库"
+    },
+    {
+      "type": "boolean",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["TCP"],
+      "difficulty": 1,
+      "stem": "TCP 是面向连接的传输层协议。",
+      "options": [],
+      "answer": ["true"],
+      "explanation": "TCP 通过三次握手建立连接，提供可靠传输。",
+      "source": "演示题库"
+    },
+    {
+      "type": "boolean",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["局域网"],
+      "difficulty": 1,
+      "stem": "LAN 通常指局域网。",
+      "options": [],
+      "answer": ["true"],
+      "explanation": "LAN（Local Area Network）即局域网，覆盖范围通常较小。",
+      "source": "演示题库"
+    },
+    {
+      "type": "boolean",
+      "subject": "计算机基础",
+      "category": "计算机网络",
+      "knowledge_points": ["设备分层"],
+      "difficulty": 2,
+      "stem": "普通二层交换机主要工作在数据链路层。",
+      "options": [],
+      "answer": ["true"],
+      "explanation": "二层交换机依据 MAC 地址转发数据帧，工作在数据链路层。",
+      "source": "演示题库"
+    },
+    {
+      "type": "boolean",
+      "subject": "计算机基础",
+      "category": "计算机组成",
+      "knowledge_points": ["内存"],
+      "difficulty": 2,
+      "stem": "计算机断电后，内存（RAM）中的数据通常会丢失。",
+      "options": [],
+      "answer": ["true"],
+      "explanation": "RAM 是易失性存储器，断电后内容会丢失；硬盘等外存可以长期保存数据。",
+      "source": "演示题库"
+    },
+    {
+      "type": "boolean",
+      "subject": "计算机基础",
+      "category": "数据表示",
+      "knowledge_points": ["数据表示"],
+      "difficulty": 1,
+      "stem": "计算机内部使用二进制表示和处理数据。",
+      "options": [],
+      "answer": ["true"],
+      "explanation": "现代计算机的底层电路使用高低电平表示 0 和 1，因此以二进制处理数据。",
+      "source": "演示题库"
+    },
+    {
+      "type": "multiple",
+      "subject": "计算机基础",
+      "category": "信息安全",
+      "knowledge_points": ["计算机病毒"],
+      "difficulty": 2,
+      "stem": "以下哪些属于计算机病毒的常见特征？",
+      "options": [
+        { "key": "A", "text": "具有传染性" },
+        { "key": "B", "text": "可能具有破坏性" },
+        { "key": "C", "text": "需要宿主程序或文件" },
+        { "key": "D", "text": "一定能被显示器直接看到" }
+      ],
+      "answer": ["A", "B", "C"],
+      "explanation": "计算机病毒通常具有传染性、破坏性、潜伏性等特征，并依附于文件或程序传播。",
+      "source": "演示题库"
+    }
+  ]
+}

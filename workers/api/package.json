@@ -1,0 +1,23 @@
+{
+  "name": "@online-quiz/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:node": "node ../../scripts/dev-server.mjs",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "test:watch": "node --test --watch test/*.test.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply online-quiz --local",
+    "db:migrate:remote": "wrangler d1 migrations apply online-quiz --remote",
+    "db:reset:local": "rm -rf .wrangler/state/v3/d1 && wrangler d1 migrations apply online-quiz --local",
+    "db:console:local": "wrangler d1 execute online-quiz --local --command"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261026.1",
+    "typescript": "5.9.3",
+    "wrangler": "4.124.0"
+  }
+}
