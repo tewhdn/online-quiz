@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { CalendarDays } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { examApi } from '../../api';
 import type { AttemptSummary, ExamSummary } from '../../types';
 import { formatDateTime } from '../../utils/format';
 import LoadingBlock from '../../components/LoadingBlock.vue';
 import EmptyState from '../../components/EmptyState.vue';
+import { Award, Clock, FileText as FileTextIcon, Users } from '@lucide/vue';
 
 const exams = ref<ExamSummary[]>([]);
 const attempts = ref<AttemptSummary[]>([]);
@@ -61,7 +63,7 @@ onMounted(load);
     <LoadingBlock v-if="loading" text="正在加载考试列表…" />
 
     <template v-else>
-      <EmptyState v-if="exams.length === 0" title="暂无已发布的模拟考试" description="请联系管理员创建考试" icon="🗓️" />
+      <EmptyState v-if="exams.length === 0" title="暂无已发布的模拟考试" description="请联系管理员创建考试" :icon="CalendarDays" />
       <div v-else class="grid grid-2">
         <RouterLink v-for="exam in exams" :key="exam.id" :to="`/exams/${exam.id}`" class="card card-hover exam-card">
           <div class="row-between">
@@ -70,10 +72,10 @@ onMounted(load);
           </div>
           <p class="small muted" style="margin-top: 6px; min-height: 42px">{{ exam.description || '暂无考试说明' }}</p>
           <div class="row small muted" style="gap: 14px; margin-top: 10px">
-            <span>📝 {{ exam.totalQuestions }} 题</span>
-            <span>⏱️ {{ exam.durationMinutes }} 分钟</span>
-            <span>💯 {{ exam.totalScore }} 分</span>
-            <span>👥 {{ exam.attemptCount }} 人次</span>
+            <span class="meta-item"><FileTextIcon :size="15" /> {{ exam.totalQuestions }} 题</span>
+            <span class="meta-item"><Clock :size="15" /> {{ exam.durationMinutes }} 分钟</span>
+            <span class="meta-item"><Award :size="15" /> {{ exam.totalScore }} 分</span>
+            <span class="meta-item"><Users :size="15" /> {{ exam.attemptCount }} 人次</span>
           </div>
           <div class="row-between" style="margin-top: 14px">
             <span class="tiny muted">
@@ -125,14 +127,3 @@ onMounted(load);
   </div>
 </template>
 
-<style scoped>
-.exam-card {
-  display: flex;
-  flex-direction: column;
-  color: var(--text);
-  text-decoration: none;
-}
-.exam-card:hover {
-  text-decoration: none;
-}
-</style>

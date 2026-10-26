@@ -5,6 +5,7 @@ import { practiceApi, questionApi } from '../../api';
 import type { FilterOptions } from '../../types';
 import { difficultyLabel, modeLabel } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
+import { BookOpen, BookX, FolderTree, KeyRound, Library, Shuffle, Shapes, Star, TrendingUp } from '@lucide/vue';
 
 const router = useRouter();
 const toast = useToast();
@@ -23,15 +24,15 @@ const type = ref('');
 const difficulty = ref<number | ''>('');
 
 const modes = [
-  { value: 'random', icon: '🎲', desc: '从题库随机抽题' },
-  { value: 'sequence', icon: '📖', desc: '按录入顺序练习' },
-  { value: 'subject', icon: '📚', desc: '按科目集中练习' },
-  { value: 'category', icon: '🗂️', desc: '按分类专项突破' },
-  { value: 'knowledge', icon: '🔑', desc: '按知识点精准练习' },
-  { value: 'type', icon: '🧩', desc: '只练单选 / 多选 / 判断' },
-  { value: 'difficulty', icon: '📈', desc: '按难度梯度练习' },
-  { value: 'mistake', icon: '📕', desc: '重做尚未掌握的错题' },
-  { value: 'favorite', icon: '⭐', desc: '练习收藏的题目' },
+  { value: 'random', icon: Shuffle, desc: '从题库随机抽题' },
+  { value: 'sequence', icon: BookOpen, desc: '按录入顺序练习' },
+  { value: 'subject', icon: Library, desc: '按科目集中练习' },
+  { value: 'category', icon: FolderTree, desc: '按分类专项突破' },
+  { value: 'knowledge', icon: KeyRound, desc: '按知识点精准练习' },
+  { value: 'type', icon: Shapes, desc: '只练单选 / 多选 / 判断' },
+  { value: 'difficulty', icon: TrendingUp, desc: '按难度梯度练习' },
+  { value: 'mistake', icon: BookX, desc: '重做尚未掌握的错题' },
+  { value: 'favorite', icon: Star, desc: '练习收藏的题目' },
 ];
 
 const counts = [5, 10, 20, 30, 50];
@@ -136,7 +137,7 @@ onMounted(load);
           :class="{ active: mode === item.value }"
           @click="mode = item.value; onModeChange()"
         >
-          <span class="mode-icon">{{ item.icon }}</span>
+          <span class="mode-icon"><component :is="item.icon" :size="18" :stroke-width="1.8" /></span>
           <span class="mode-name">{{ modeLabel(item.value) }}</span>
           <span class="mode-desc">{{ item.desc }}</span>
         </button>
@@ -227,44 +228,3 @@ onMounted(load);
   </div>
 </template>
 
-<style scoped>
-.mode-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
-}
-.mode-card {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: flex-start;
-  padding: 13px 14px;
-  border-radius: 13px;
-  border: 1.5px solid var(--border);
-  background: var(--surface-solid);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
-}
-.mode-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-1px);
-}
-.mode-card.active {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-  box-shadow: var(--shadow-sm);
-}
-.mode-icon {
-  font-size: 1.25rem;
-}
-.mode-name {
-  font-weight: 700;
-  font-size: 0.92rem;
-}
-.mode-desc {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.4;
-}
-</style>

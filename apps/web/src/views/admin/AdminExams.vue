@@ -5,6 +5,7 @@ import type { ExamSummary } from '../../types';
 import { formatDateTime } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
 import LoadingBlock from '../../components/LoadingBlock.vue';
+import { CalendarDays } from '@lucide/vue';
 
 const toast = useToast();
 const exams = ref<ExamSummary[]>([]);
@@ -91,7 +92,7 @@ onMounted(load);
         </table>
       </div>
       <div v-if="exams.length === 0" class="empty">
-        <div class="empty-icon">🗓️</div>
+        <div class="empty-icon"><CalendarDays :size="20" /></div>
         <h3>还没有考试</h3>
         <RouterLink class="btn btn-primary btn-sm" to="/admin/exams/new">创建第一场考试</RouterLink>
       </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { QuestionOption } from '../types';
+import { Check, X } from '@lucide/vue';
 
 const props = withDefaults(
   defineProps<{
@@ -58,7 +59,7 @@ const displayOptions = (): QuestionOption[] => {
       :aria-pressed="modelValue.includes(option.key)"
       @click="toggle(option.key)"
     >
-      <span class="option-key">{{ type === 'boolean' ? (option.key === 'true' ? '✓' : '✕') : option.key }}</span>
+      <span class="option-key"><Check v-if="type === 'boolean' && option.key === 'true'" :size="14" /><X v-else-if="type === 'boolean'" :size="14" /><template v-else>{{ option.key }}</template></span>
       <span class="option-text">{{ option.text }}</span>
     </button>
   </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Star } from '@lucide/vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { favoriteApi, questionApi, practiceApi } from '../../api';
@@ -84,12 +85,12 @@ onMounted(load);
     <LoadingBlock v-if="loading" text="正在加载收藏…" />
 
     <template v-else>
-      <EmptyState v-if="items.length === 0" title="还没有收藏题目" description="答题时点击「收藏」，题目会出现在这里" icon="⭐">
+      <EmptyState v-if="items.length === 0" title="还没有收藏题目" description="答题时点击「收藏」，题目会出现在这里" :icon="Star">
         <RouterLink class="btn btn-primary btn-sm" to="/practice">去刷题</RouterLink>
       </EmptyState>
 
-      <div v-else class="stack" style="gap: 12px">
-        <article v-for="item in items" :key="item.id" class="card">
+      <section v-else class="card list-panel">
+        <article v-for="item in items" :key="item.id" class="list-question">
           <div class="question-meta">
             <span class="badge badge-primary">{{ typeLabel(item.question.type) }}</span>
             <span class="badge">难度 {{ item.question.difficulty }} · {{ difficultyLabel(item.question.difficulty) }}</span>
@@ -102,7 +103,7 @@ onMounted(load);
             <RouterLink class="btn btn-sm btn-soft" to="/practice">练习同类题</RouterLink>
           </div>
         </article>
-      </div>
+      </section>
 
       <PaginationBar :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @change="page = $event; load()" />
     </template>

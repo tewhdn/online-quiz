@@ -5,6 +5,7 @@ import type { AiGenerateResult, AiSource, AiTask } from '../../types';
 import { formatDateTime, formatFileSize, modeLabel, statusLabel } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
 import LoadingBlock from '../../components/LoadingBlock.vue';
+import { Paperclip } from '@lucide/vue';
 
 const toast = useToast();
 
@@ -260,13 +261,13 @@ onMounted(load);
             <label>上传资料（TXT / PDF / DOCX，最大 {{ formatFileSize(10485760) }}）</label>
             <label class="file-drop">
               <input type="file" accept=".txt,.pdf,.docx" @change="upload" />
-              <span style="font-size: 1.5rem">📎</span>
+              <Paperclip :size="24" :stroke-width="1.7" />
               <span>{{ uploading ? '正在解析…' : uploadInfo ? uploadInfo.name : '点击选择资料文件' }}</span>
               <span class="tiny">扫描版 PDF 无法提取文本时会明确提示，请先 OCR</span>
             </label>
           </div>
 
-          <div v-if="uploadInfo" class="card card-flat" style="margin-top: 12px; padding: 14px">
+          <div v-if="uploadInfo" class="upload-summary" style="margin-top: 12px">
             <div class="row-between">
               <div class="small">
                 <strong>{{ uploadInfo.name }}</strong> · {{ uploadInfo.chars }} 字符
@@ -314,18 +315,18 @@ onMounted(load);
             <RouterLink class="btn btn-sm btn-soft" to="/admin/ai/review">前往审核</RouterLink>
           </div>
         </div>
-        <div class="grid grid-4">
-          <div class="card stat-card"><div class="stat-label">生成</div><div class="stat-value">{{ result.generated }}</div></div>
-          <div class="card stat-card success"><div class="stat-label">待审核</div><div class="stat-value">{{ result.pendingReview }}</div></div>
-          <div class="card stat-card danger"><div class="stat-label">校验失败</div><div class="stat-value">{{ result.invalid }}</div></div>
-          <div class="card stat-card warning"><div class="stat-label">重复提示</div><div class="stat-value">{{ result.duplicates }}</div></div>
+        <div class="stat-strip" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
+          <div class="stat-card"><div class="stat-label">生成</div><div class="stat-value">{{ result.generated }}</div></div>
+          <div class="stat-card success"><div class="stat-label">待审核</div><div class="stat-value">{{ result.pendingReview }}</div></div>
+          <div class="stat-card danger"><div class="stat-label">校验失败</div><div class="stat-value">{{ result.invalid }}</div></div>
+          <div class="stat-card warning"><div class="stat-label">重复提示</div><div class="stat-value">{{ result.duplicates }}</div></div>
         </div>
         <p v-if="result.error" class="error-box" style="margin-top: 12px">{{ result.error }}</p>
         <p class="small muted" style="margin-top: 12px">
           Token 用量：{{ result.usage.totalTokens ?? '接口未返回' }}（输入 {{ result.usage.promptTokens ?? '—' }} / 输出 {{ result.usage.completionTokens ?? '—' }}）
         </p>
         <div class="stack" style="gap: 8px; margin-top: 12px">
-          <div v-for="item in result.questions" :key="item.id" class="card card-flat" style="padding: 12px">
+          <div v-for="item in result.questions" :key="item.id" class="preview-item">
             <div class="row-between">
               <div class="small">{{ item.stem || '（无题干）' }}</div>
               <span class="badge" :class="item.status === 'pending' ? 'badge-warning' : 'badge-danger'">{{ statusLabel(item.status) }}</span>

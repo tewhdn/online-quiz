@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
+import { NDataTable, type DataTableColumns } from 'naive-ui';
 import { adminApi } from '../../api';
 import type { AuditLog } from '../../types';
 import { formatDateTime } from '../../utils/format';
-import LoadingBlock from '../../components/LoadingBlock.vue';
 import PaginationBar from '../../components/PaginationBar.vue';
 
 const logs = ref<AuditLog[]>([]);
@@ -14,6 +14,22 @@ const page = ref(1);
 const total = ref(0);
 const totalPages = ref(1);
 const pageSize = 30;
+
+const columns = computed<DataTableColumns<AuditLog>>(() => [
+  {
+    title: '时间',
+    key: 'createdAt',
+    width: 168,
+    render: (row) => h('span', { class: 'small muted nowrap' }, formatDateTime(row.createdAt)),
+  },
+  { title: '管理员', key: 'adminName', width: 120, render: (row) => row.adminName ?? '—' },
+  { title: '操作', key: 'action', width: 180, render: (row) => h('span', { class: 'mono small' }, row.action) },
+  { title: '对象类型', key: 'targetType', width: 100, render: (row) => row.targetType ?? '—' },
+  { title: '对象 ID', key: 'targetId', width: 170, render: (row) => h('span', { class: 'mono tiny muted' }, row.targetId ?? '—') },
+  { title: '详情', key: 'detail', ellipsis: { tooltip: true }, render: (row) => h('span', { class: 'tiny muted' }, row.detail ?? '—') },
+]);
+
+const rowKey = (row: AuditLog): string => row.id;
 
 async function load(): Promise<void> {
   loading.value = true;
@@ -55,27 +71,18 @@ onMounted(load);
       </div>
 
       <div v-if="error" class="error-box">{{ error }}</div>
-      <LoadingBlock v-if="loading" text="正在加载日志…" />
-
-      <template v-else>
-        <div class="table-wrap">
-          <table class="table">
-            <thead><tr><th>时间</th><th>管理员</th><th>操作</th><th>对象类型</th><th>对象 ID</th><th>详情</th></tr></thead>
-            <tbody>
-              <tr v-for="log in logs" :key="log.id">
-                <td class="small muted nowrap">{{ formatDateTime(log.createdAt) }}</td>
-                <td>{{ log.adminName ?? '—' }}</td>
-                <td><span class="mono small">{{ log.action }}</span></td>
-                <td class="small">{{ log.targetType ?? '—' }}</td>
-                <td class="mono tiny muted">{{ log.targetId ?? '—' }}</td>
-                <td class="tiny muted" style="max-width: 320px; overflow: hidden; text-overflow: ellipsis">{{ log.detail }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-if="logs.length === 0" class="empty">暂无日志</div>
-        <PaginationBar :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @change="page = $event; load()" />
-      </template>
+      <NDataTable
+        :columns="columns"
+        :data="logs"
+        :loading="loading"
+        :row-key="rowKey"
+        :pagination="false"
+        :bordered="false"
+        :single-line="false"
+        :scroll-x="920"
+        size="small"
+      />
+      <PaginationBar :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @change="page = $event; load()" />
     </section>
   </div>
 </template>

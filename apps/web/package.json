@@ -10,6 +10,8 @@
     "typecheck": "vue-tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@lucide/vue": "^1.61.0",
+    "naive-ui": "^2.45.3",
     "pinia": "3.0.4",
     "vue": "3.5.44",
     "vue-router": "4.5.1"

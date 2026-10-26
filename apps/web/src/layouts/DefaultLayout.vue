@@ -1,54 +1,70 @@
 <script setup lang="ts">
+import { computed, h } from 'vue';
+import { RouterLink, RouterView, useRouter } from 'vue-router';
+import { NDropdown, NButton, NIcon, type DropdownOption } from 'naive-ui';
+import {
+  BookX,
+  ChevronDown,
+  FileText,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Monitor,
+  Moon,
+  PencilLine,
+  Star,
+  Sun,
+  User,
+} from '@lucide/vue';
 import BrandMark from '../components/BrandMark.vue';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useTheme } from '../composables/useTheme';
 import { useToast } from '../composables/useToast';
 
 const auth = useAuthStore();
-const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const theme = useTheme();
-const menuOpen = ref(false);
-const loggingOut = ref(false);
 
 const navLinks = [
-  { to: '/', label: '首页', short: '首页', icon: '🏠' },
-  { to: '/practice', label: '刷题', short: '刷题', icon: '✏️' },
-  { to: '/exams', label: '模拟考试', short: '考试', icon: '📝' },
-  { to: '/mistakes', label: '错题本', short: '错题', icon: '📕' },
-  { to: '/favorites', label: '收藏', short: '收藏', icon: '⭐' },
+  { to: '/', label: '首页', short: '首页', icon: Home },
+  { to: '/practice', label: '刷题', short: '刷题', icon: PencilLine },
+  { to: '/exams', label: '模拟考试', short: '考试', icon: FileText },
+  { to: '/mistakes', label: '错题本', short: '错题', icon: BookX },
+  { to: '/favorites', label: '收藏', short: '收藏', icon: Star },
 ];
 
-function closeMenu(): void {
-  menuOpen.value = false;
-}
+const themeMode = computed(() => theme.mode.value);
+const themeIcon = computed(() => (themeMode.value === 'dark' ? Sun : themeMode.value === 'light' ? Moon : Monitor));
+const themeTitle = computed(() =>
+  themeMode.value === 'dark' ? '切换为浅色' : themeMode.value === 'light' ? '切换为跟随系统' : '切换为深色',
+);
 
-function onDocumentClick(event: MouseEvent): void {
-  const target = event.target as HTMLElement | null;
-  if (target && target.closest('.user-chip') === null && target.closest('.menu') === null) closeMenu();
+const userOptions = computed<DropdownOption[]>(() => {
+  const options: DropdownOption[] = [
+    { label: '个人中心', key: 'profile', icon: () => h(NIcon, null, { default: () => h(User) }) },
+  ];
+  if (auth.isAdmin) {
+    options.push({ label: '管理后台', key: 'admin', icon: () => h(NIcon, null, { default: () => h(LayoutDashboard) }) });
+  }
+  options.push(
+    { type: 'divider', key: 'divider' },
+    { label: '退出登录', key: 'logout', icon: () => h(NIcon, null, { default: () => h(LogOut) }) },
+  );
+  return options;
+});
+
+async function onUserSelect(key: string | number): Promise<void> {
+  if (key === 'profile') await router.push('/profile');
+  else if (key === 'admin') await router.push('/admin');
+  else if (key === 'logout') await logout();
 }
 
 async function logout(): Promise<void> {
-  loggingOut.value = true;
-  try {
-    await auth.logout();
-    toast.success('已退出登录');
-    router.replace({ name: 'login' });
-  } finally {
-    loggingOut.value = false;
-    closeMenu();
-  }
+  await auth.logout();
+  toast.success('已退出登录');
+  await router.replace({ name: 'login' });
 }
-
-onMounted(() => document.addEventListener('click', onDocumentClick));
-onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick));
-watch(
-  () => route.fullPath,
-  () => closeMenu(),
-);
 
 const initials = () => (auth.displayName || 'U').slice(0, 1).toUpperCase();
 </script>
@@ -63,33 +79,31 @@ const initials = () => (auth.displayName || 'U').slice(0, 1).toUpperCase();
         </RouterLink>
 
         <nav class="nav" aria-label="主导航">
-          <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to">{{ link.label }}</RouterLink>
-          <RouterLink v-if="auth.isAdmin" to="/admin">管理后台</RouterLink>
+          <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to" class="nav-link">
+            <NIcon :size="17" :stroke-width="1.8"><component :is="link.icon" /></NIcon>
+            <span>{{ link.label }}</span>
+          </RouterLink>
+          <RouterLink v-if="auth.isAdmin" to="/admin" class="nav-link">
+            <NIcon :size="17" :stroke-width="1.8"><LayoutDashboard /></NIcon>
+            <span>管理后台</span>
+          </RouterLink>
         </nav>
 
-        <div class="row" style="gap: 6px">
-          <button
-            class="btn btn-icon btn-ghost"
-            type="button"
-            :title="theme.mode.value === 'dark' ? '切换为浅色' : theme.mode.value === 'light' ? '切换为自动' : '切换为深色'"
-            @click="theme.toggle()"
-          >
-            {{ theme.mode.value === 'dark' ? '☀️' : theme.mode.value === 'light' ? '🌗' : '🌙' }}
-          </button>
-          <button class="user-chip" type="button" @click.stop="menuOpen = !menuOpen">
-            <span class="avatar">{{ initials() }}</span>
-            <span class="small strong">{{ auth.displayName }}</span>
-            <span class="tiny muted">▾</span>
-          </button>
-        </div>
-      </div>
+        <div class="topbar-actions">
+          <NButton quaternary circle :title="themeTitle" @click="theme.toggle()">
+            <template #icon>
+              <NIcon :size="18"><component :is="themeIcon" /></NIcon>
+            </template>
+          </NButton>
 
-      <div v-if="menuOpen" class="menu" role="menu">
-        <RouterLink to="/profile" role="menuitem">👤 个人中心</RouterLink>
-        <RouterLink v-if="auth.isAdmin" to="/admin" role="menuitem">🛠️ 管理后台</RouterLink>
-        <button type="button" class="danger" :disabled="loggingOut" role="menuitem" @click="logout">
-          🚪 {{ loggingOut ? '退出中…' : '退出登录' }}
-        </button>
+          <NDropdown :options="userOptions" trigger="click" @select="onUserSelect">
+            <button class="user-chip" type="button" aria-label="用户菜单">
+              <span class="avatar">{{ initials() }}</span>
+              <span class="user-name">{{ auth.displayName }}</span>
+              <NIcon :size="14" :depth="3"><ChevronDown /></NIcon>
+            </button>
+          </NDropdown>
+        </div>
       </div>
     </header>
 
@@ -101,11 +115,11 @@ const initials = () => (auth.displayName || 'U').slice(0, 1).toUpperCase();
 
     <nav class="bottom-nav" aria-label="移动端导航">
       <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to">
-        <span class="bn-icon">{{ link.icon }}</span>
+        <NIcon :size="20" :stroke-width="1.8"><component :is="link.icon" /></NIcon>
         <span>{{ link.short }}</span>
       </RouterLink>
       <RouterLink to="/profile">
-        <span class="bn-icon">👤</span>
+        <NIcon :size="20" :stroke-width="1.8"><User /></NIcon>
         <span>我的</span>
       </RouterLink>
     </nav>

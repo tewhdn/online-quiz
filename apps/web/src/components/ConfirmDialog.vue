@@ -1,5 +1,7 @@
 <script setup lang="ts">
-withDefaults(
+import { NButton, NModal } from 'naive-ui';
+
+const props = withDefaults(
   defineProps<{
     open: boolean;
     title: string;
@@ -12,25 +14,31 @@ withDefaults(
   { message: '', confirmText: '确认', cancelText: '取消', danger: false, loading: false },
 );
 const emit = defineEmits<{ (event: 'confirm'): void; (event: 'cancel'): void }>();
+
+function onShow(show: boolean): void {
+  if (!show && !props.loading) emit('cancel');
+}
 </script>
 
 <template>
-  <Teleport to="body">
-    <div v-if="open" class="modal-backdrop" @click.self="emit('cancel')">
-      <div class="modal" role="dialog" aria-modal="true">
-        <div class="modal-header">
-          <h2>{{ title }}</h2>
-        </div>
-        <p v-if="message" class="muted" style="white-space: pre-wrap">{{ message }}</p>
-        <slot />
-        <div class="modal-footer">
-          <button class="btn btn-ghost" :disabled="loading" @click="emit('cancel')">{{ cancelText }}</button>
-          <button class="btn" :class="danger ? 'btn-danger' : 'btn-primary'" :disabled="loading" @click="emit('confirm')">
-            <span v-if="loading" class="spinner" />
-            {{ loading ? '处理中…' : confirmText }}
-          </button>
-        </div>
+  <NModal
+    :show="open"
+    preset="card"
+    :title="title"
+    :mask-closable="!loading"
+    :closable="!loading"
+    :style="{ width: 'min(480px, calc(100vw - 32px))' }"
+    @update:show="onShow"
+  >
+    <p v-if="message" class="muted" style="white-space: pre-wrap">{{ message }}</p>
+    <slot />
+    <template #footer>
+      <div class="dialog-actions">
+        <NButton :disabled="loading" @click="emit('cancel')">{{ cancelText }}</NButton>
+        <NButton :type="danger ? 'error' : 'primary'" :loading="loading" @click="emit('confirm')">
+          {{ confirmText }}
+        </NButton>
       </div>
-    </div>
-  </Teleport>
+    </template>
+  </NModal>
 </template>

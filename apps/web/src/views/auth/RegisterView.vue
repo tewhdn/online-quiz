@@ -61,6 +61,10 @@ async function submit(): Promise<void> {
 
 <template>
   <form class="stack" novalidate @submit.prevent="submit">
+    <div>
+      <h1 class="auth-title">注册账号</h1>
+      <p class="auth-sub">需要管理员发放的邀请码</p>
+    </div>
     <div class="field">
       <label for="reg-username">用户名</label>
       <input id="reg-username" v-model="username" class="input" autocomplete="username" placeholder="设置用户名" maxlength="24" />

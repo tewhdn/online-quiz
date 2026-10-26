@@ -1,9 +1,17 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
 const STORAGE_KEY = 'oq-theme';
 const mode = ref<ThemeMode>('auto');
+const media = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const systemDark = ref(media?.matches ?? false);
+
+media?.addEventListener('change', (event) => {
+  systemDark.value = event.matches;
+});
+
+export const isDark = computed(() => mode.value === 'dark' || (mode.value === 'auto' && systemDark.value));
 
 export function applyTheme(next: ThemeMode): void {
   mode.value = next;
@@ -32,5 +40,5 @@ export function useTheme() {
     else if (mode.value === 'dark') applyTheme('light');
     else applyTheme('auto');
   }
-  return { mode, applyTheme, toggle };
+  return { mode, isDark, applyTheme, toggle };
 }

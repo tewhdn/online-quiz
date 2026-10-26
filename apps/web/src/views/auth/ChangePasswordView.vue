@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import { useToast } from '../../composables/useToast';
+import BrandMark from '../../components/BrandMark.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -57,7 +58,7 @@ async function submit(): Promise<void> {
   <div class="auth-shell">
     <div class="auth-card card">
       <div class="auth-brand">
-        <span class="brand-mark">答</span>
+        <BrandMark />
         <div>
           <div class="auth-title">修改密码</div>
           <div class="auth-sub">为了账号安全，首次登录或密码被重置后必须修改密码</div>

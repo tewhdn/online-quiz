@@ -5,6 +5,7 @@ import type { AdminStats } from '../../types';
 import { formatDateTime, formatNumber } from '../../utils/format';
 import LoadingBlock from '../../components/LoadingBlock.vue';
 import StatCard from '../../components/StatCard.vue';
+import { CalendarDays, Plus, Sparkles, Ticket, Upload } from '@lucide/vue';
 
 const stats = ref<AdminStats | null>(null);
 const loading = ref(true);
@@ -78,11 +79,11 @@ onMounted(load);
         <section class="card">
           <div class="card-header"><h2>快捷操作</h2></div>
           <div class="quick-grid">
-            <RouterLink class="quick-action" to="/admin/questions/new"><span class="qa-icon">➕</span><span class="qa-label">新建题目</span></RouterLink>
-            <RouterLink class="quick-action" to="/admin/import"><span class="qa-icon">📥</span><span class="qa-label">批量导入</span></RouterLink>
-            <RouterLink class="quick-action" to="/admin/ai"><span class="qa-icon">✨</span><span class="qa-label">AI 出题</span></RouterLink>
-            <RouterLink class="quick-action" to="/admin/exams/new"><span class="qa-icon">🗓️</span><span class="qa-label">创建考试</span></RouterLink>
-            <RouterLink class="quick-action" to="/admin/invites"><span class="qa-icon">🎟️</span><span class="qa-label">生成邀请码</span></RouterLink>
+            <RouterLink class="quick-action" to="/admin/questions/new"><span class="qa-icon"><Plus :size="18" :stroke-width="1.8" /></span><span class="qa-label">新建题目</span></RouterLink>
+            <RouterLink class="quick-action" to="/admin/import"><span class="qa-icon"><Upload :size="18" :stroke-width="1.8" /></span><span class="qa-label">批量导入</span></RouterLink>
+            <RouterLink class="quick-action" to="/admin/ai"><span class="qa-icon"><Sparkles :size="18" :stroke-width="1.8" /></span><span class="qa-label">AI 出题</span></RouterLink>
+            <RouterLink class="quick-action" to="/admin/exams/new"><span class="qa-icon"><CalendarDays :size="18" :stroke-width="1.8" /></span><span class="qa-label">创建考试</span></RouterLink>
+            <RouterLink class="quick-action" to="/admin/invites"><span class="qa-icon"><Ticket :size="18" :stroke-width="1.8" /></span><span class="qa-label">生成邀请码</span></RouterLink>
           </div>
         </section>
       </div>

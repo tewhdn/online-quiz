@@ -1,15 +1,22 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ title: string; description?: string; icon?: string }>(), {
+import { computed, type Component } from 'vue';
+import { NEmpty } from 'naive-ui';
+import { Inbox } from '@lucide/vue';
+
+const props = withDefaults(defineProps<{ title: string; description?: string; icon?: Component }>(), {
   description: '',
-  icon: '🗂️',
 });
+const icon = computed(() => props.icon ?? Inbox);
 </script>
 
 <template>
-  <div class="empty">
-    <div class="empty-icon">{{ icon }}</div>
-    <h3>{{ title }}</h3>
-    <p v-if="description" class="small">{{ description }}</p>
-    <slot />
-  </div>
+  <NEmpty :description="title" class="empty-state">
+    <template #icon>
+      <component :is="icon" :size="28" :stroke-width="1.7" />
+    </template>
+    <template #extra>
+      <p v-if="description" class="small muted empty-description">{{ description }}</p>
+      <slot />
+    </template>
+  </NEmpty>
 </template>

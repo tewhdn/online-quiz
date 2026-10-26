@@ -1,0 +1,123 @@
+import type { GlobalThemeOverrides } from 'naive-ui';
+
+const fontFamily =
+  "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif";
+
+const shared = {
+  fontFamily,
+  fontSize: '14px',
+  fontSizeMini: '12px',
+  fontSizeTiny: '12px',
+  fontSizeSmall: '13px',
+  fontSizeMedium: '14px',
+  fontSizeLarge: '15px',
+  fontSizeHuge: '16px',
+  heightMini: '24px',
+  heightTiny: '28px',
+  heightSmall: '32px',
+  heightMedium: '36px',
+  heightLarge: '42px',
+  heightHuge: '46px',
+  borderRadius: '8px',
+  borderRadiusSmall: '6px',
+};
+
+export function getThemeOverrides(isDark: boolean): GlobalThemeOverrides {
+  if (isDark) {
+    return {
+      common: {
+        ...shared,
+        bodyColor: '#12161A',
+        cardColor: '#181D22',
+        modalColor: '#1A2026',
+        popoverColor: '#1E242A',
+        tableColor: '#181D22',
+        inputColor: '#1A2026',
+        textColorBase: '#E7EAED',
+        textColor1: '#E7EAED',
+        textColor2: '#C2C8CE',
+        textColor3: '#8C959D',
+        textColorDisabled: '#6B747C',
+        borderColor: '#2A3138',
+        dividerColor: '#242B31',
+        primaryColor: '#6FB3AD',
+        primaryColorHover: '#8AC8C2',
+        primaryColorPressed: '#559792',
+        primaryColorSuppl: '#6FB3AD',
+        infoColor: '#7FA9D6',
+        successColor: '#63B78D',
+        warningColor: '#D6A45A',
+        errorColor: '#E07865',
+        placeholderColor: '#6B747C',
+        hoverColor: 'rgba(255, 255, 255, 0.05)',
+      },
+      Button: {
+        borderRadiusTiny: '4px',
+        borderRadiusSmall: '6px',
+        borderRadiusMedium: '8px',
+        borderRadiusLarge: '10px',
+        fontWeight: '500',
+      },
+      Input: { borderRadius: '8px' },
+      Card: { borderRadius: '10px', color: '#181D22', borderColor: '#2A3138' },
+      Modal: { color: '#1A2026' },
+      Menu: {
+        itemHeight: '38px',
+        borderRadius: '6px',
+        itemColorActive: 'rgba(111, 179, 173, 0.14)',
+        itemColorActiveHover: 'rgba(111, 179, 173, 0.2)',
+        itemTextColorActive: '#8AC8C2',
+        itemIconColorActive: '#8AC8C2',
+      },
+      Tag: { borderRadius: '4px' },
+    };
+  }
+
+  return {
+    common: {
+      ...shared,
+      bodyColor: '#F7F6F2',
+      cardColor: '#FFFFFF',
+      modalColor: '#FFFFFF',
+      popoverColor: '#FFFFFF',
+      tableColor: '#FFFFFF',
+      inputColor: '#FFFFFF',
+      textColorBase: '#1C232B',
+      textColor1: '#1C232B',
+      textColor2: '#3D4650',
+      textColor3: '#6B7480',
+      textColorDisabled: '#9AA1A9',
+      borderColor: '#E1DED6',
+      dividerColor: '#E8E5DD',
+      primaryColor: '#17494D',
+      primaryColorHover: '#1F5F63',
+      primaryColorPressed: '#0F3A3D',
+      primaryColorSuppl: '#17494D',
+      infoColor: '#2F5D8A',
+      successColor: '#2F7D5B',
+      warningColor: '#A96A14',
+      errorColor: '#C0492F',
+      placeholderColor: '#9AA1A9',
+      hoverColor: 'rgba(28, 35, 43, 0.04)',
+    },
+    Button: {
+      borderRadiusTiny: '4px',
+      borderRadiusSmall: '6px',
+      borderRadiusMedium: '8px',
+      borderRadiusLarge: '10px',
+      fontWeight: '500',
+    },
+    Input: { borderRadius: '8px' },
+    Card: { borderRadius: '10px', color: '#FFFFFF', borderColor: '#E1DED6' },
+    Modal: { color: '#FFFFFF' },
+    Menu: {
+      itemHeight: '38px',
+      borderRadius: '6px',
+      itemColorActive: 'rgba(23, 73, 77, 0.08)',
+      itemColorActiveHover: 'rgba(23, 73, 77, 0.12)',
+      itemTextColorActive: '#17494D',
+      itemIconColorActive: '#17494D',
+    },
+    Tag: { borderRadius: '4px' },
+  };
+}

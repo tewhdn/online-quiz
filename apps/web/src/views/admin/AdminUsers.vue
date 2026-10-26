@@ -226,17 +226,3 @@ onMounted(load);
   </div>
 </template>
 
-<style scoped>
-.link-btn {
-  border: none;
-  background: none;
-  padding: 0;
-  color: var(--primary);
-  font-weight: 600;
-  cursor: pointer;
-  font-size: inherit;
-}
-.link-btn:hover {
-  text-decoration: underline;
-}
-</style>

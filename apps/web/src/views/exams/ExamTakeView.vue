@@ -9,6 +9,7 @@ import { useToast } from '../../composables/useToast';
 import QuestionOptions from '../../components/QuestionOptions.vue';
 import ConfirmDialog from '../../components/ConfirmDialog.vue';
 import LoadingBlock from '../../components/LoadingBlock.vue';
+import { Flag } from '@lucide/vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -266,7 +267,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="row" style="gap: 8px">
           <button class="btn btn-ghost" type="button" @click="toggleFlag">
-            {{ question?.flagged ? '🚩 取消标记' : '🚩 标记疑问' }}
+            <Flag :size="15" :fill="question?.flagged ? 'currentColor' : 'none'" /> {{ question?.flagged ? '取消标记' : '标记疑问' }}
           </button>
           <button class="btn btn-soft" type="button" @click="sheetOpen = true">答题卡（{{ answeredCount }}/{{ total }}）</button>
         </div>

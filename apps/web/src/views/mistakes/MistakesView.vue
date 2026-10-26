@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BookX } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { mistakeApi, practiceApi } from '../../api';
@@ -106,13 +107,13 @@ onMounted(load);
         v-if="items.length === 0"
         :title="status === 'pending' ? '没有待复习的错题' : '暂无错题记录'"
         :description="status === 'pending' ? '继续保持，或去做几组练习检验掌握情况' : '做错的题目会自动出现在这里'"
-        icon="📕"
+        :icon="BookX"
       >
         <RouterLink class="btn btn-primary btn-sm" to="/practice">去刷题</RouterLink>
       </EmptyState>
 
-      <div v-else class="stack" style="gap: 12px">
-        <article v-for="item in items" :key="item.id" class="card">
+      <section v-else class="card list-panel">
+        <article v-for="item in items" :key="item.id" class="list-question">
           <div class="question-meta">
             <span class="badge badge-primary">{{ typeLabel(item.question.type) }}</span>
             <span class="badge">难度 {{ item.question.difficulty }} · {{ difficultyLabel(item.question.difficulty) }}</span>
@@ -134,7 +135,7 @@ onMounted(load);
             <RouterLink class="btn btn-sm btn-soft" :to="`/practice`">专项练习</RouterLink>
           </div>
         </article>
-      </div>
+      </section>
 
       <PaginationBar :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @change="page = $event; load()" />
     </template>

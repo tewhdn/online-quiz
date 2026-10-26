@@ -124,7 +124,7 @@ onMounted(load);
             </div>
           </div>
 
-          <div v-for="item in visibleQuestions" :key="item.examQuestionId" class="card card-flat question-review">
+          <div v-for="item in visibleQuestions" :key="item.examQuestionId" class="question-review">
             <div class="question-meta">
               <span class="badge badge-primary">{{ typeLabel(item.type) }}</span>
               <span class="badge">{{ item.score }} / {{ item.maxScore }} 分</span>
@@ -159,31 +159,3 @@ onMounted(load);
   </div>
 </template>
 
-<style scoped>
-.score-hero {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.mini-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--surface-2);
-}
-.mini-stat strong {
-  font-size: 1.5rem;
-}
-.mini-stat.success strong {
-  color: var(--success);
-}
-.mini-stat.danger strong {
-  color: var(--danger);
-}
-.question-review {
-  border: 1px solid var(--border);
-}
-</style>

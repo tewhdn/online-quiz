@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { adminApi } from '../../api';
 import type { ImportSummary } from '../../types';
 import { useToast } from '../../composables/useToast';
+import { ClipboardList, FileText } from '@lucide/vue';
 
 const toast = useToast();
 
@@ -136,7 +137,7 @@ const canCommit = computed(() => result.value && result.value.mode === 'preview'
 
         <label class="file-drop" style="margin-top: 14px">
           <input type="file" accept=".json,.csv,application/json,text/csv" @change="onFile" />
-          <span style="font-size: 1.5rem">📄</span>
+          <FileText :size="24" :stroke-width="1.7" />
           <span>{{ fileName || '点击选择 JSON / CSV 文件' }}</span>
           <span class="tiny">最大 5 MB · 单次最多 1000 道题</span>
         </label>
@@ -166,7 +167,7 @@ const canCommit = computed(() => result.value && result.value.mode === 'preview'
       <section class="card">
         <div class="card-header"><h2>导入结果</h2></div>
         <div v-if="!result" class="empty">
-          <div class="empty-icon">📋</div>
+          <div class="empty-icon"><ClipboardList :size="20" /></div>
           <h3>还没有预览结果</h3>
           <p class="small">点击「预览」查看可导入数量与错误详情</p>
         </div>
@@ -212,7 +213,7 @@ const canCommit = computed(() => result.value && result.value.mode === 'preview'
           <div v-if="result.preview.length > 0" style="margin-top: 16px">
             <h3 style="font-size: 0.95rem">题目预览（前 10 道）</h3>
             <div class="stack" style="gap: 8px">
-              <div v-for="(item, index) in result.preview" :key="index" class="card card-flat" style="padding: 12px">
+              <div v-for="(item, index) in result.preview" :key="index" class="preview-item">
                 <div class="tiny muted">第 {{ index + 1 }} 题 · {{ item.type }}</div>
                 <div class="small" style="margin-top: 4px">{{ item.stem }}</div>
               </div>

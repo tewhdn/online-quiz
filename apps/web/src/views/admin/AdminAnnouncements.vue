@@ -5,6 +5,7 @@ import type { Announcement } from '../../types';
 import { formatDateTime } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
 import LoadingBlock from '../../components/LoadingBlock.vue';
+import { Megaphone } from '@lucide/vue';
 
 const toast = useToast();
 const items = ref<Announcement[]>([]);
@@ -93,7 +94,7 @@ onMounted(load);
 
     <section v-else class="card">
       <div v-if="items.length === 0" class="empty">
-        <div class="empty-icon">📢</div>
+        <div class="empty-icon"><Megaphone :size="20" /></div>
         <h3>还没有公告</h3>
         <button class="btn btn-primary btn-sm" @click="startCreate">发布第一条公告</button>
       </div>

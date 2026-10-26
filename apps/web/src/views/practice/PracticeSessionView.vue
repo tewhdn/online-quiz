@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CircleHelp } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { practiceApi, questionApi } from '../../api';
@@ -11,6 +12,7 @@ import ProgressBar from '../../components/ProgressBar.vue';
 import ConfirmDialog from '../../components/ConfirmDialog.vue';
 import LoadingBlock from '../../components/LoadingBlock.vue';
 import EmptyState from '../../components/EmptyState.vue';
+import { CircleCheck, CircleX, Star } from '@lucide/vue';
 
 interface AnswerInfo {
   questionId: string;
@@ -228,16 +230,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
       </div>
     </div>
 
-    <EmptyState v-else-if="!current" title="练习中没有题目" description="该练习可能已结束或题目已下架" icon="🗂️">
+    <EmptyState v-else-if="!current" title="练习中没有题目" description="该练习可能已结束或题目已下架" :icon="CircleHelp">
       <RouterLink class="btn btn-primary btn-sm" to="/practice">重新选择</RouterLink>
     </EmptyState>
 
     <template v-else>
-      <div class="card">
-        <ProgressBar :value="answeredCount" :max="totalCount" :label="`进度 ${answeredCount} / ${totalCount}`" />
-      </div>
-
       <section class="card">
+        <ProgressBar :value="answeredCount" :max="totalCount" :label="`进度 ${answeredCount} / ${totalCount}`" />
+        <div class="divider" />
         <div class="question-meta">
           <span class="badge badge-primary">{{ typeLabel(current.type) }}</span>
           <span class="badge">难度 {{ current.difficulty }} · {{ difficultyLabel(current.difficulty) }}</span>
@@ -245,7 +245,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
           <span v-if="current.category" class="badge">{{ current.category }}</span>
           <span class="spacer" style="flex: 1" />
           <button class="btn btn-sm btn-ghost" type="button" @click="toggleFavorite">
-            {{ isFavorite ? '⭐ 已收藏' : '☆ 收藏' }}
+            <Star :size="15" :fill="isFavorite ? 'currentColor' : 'none'" /> {{ isFavorite ? '已收藏' : '收藏' }}
           </button>
         </div>
 
@@ -272,7 +272,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
         <div v-if="currentAnswer" class="answer-feedback" :class="currentAnswer.isCorrect ? 'correct' : 'wrong'">
           <div class="feedback-title" :class="currentAnswer.isCorrect ? 'correct' : 'wrong'">
-            {{ currentAnswer.isCorrect ? '✅ 回答正确' : '❌ 回答错误' }}
+            <CircleCheck v-if="currentAnswer.isCorrect" :size="16" /> <CircleX v-else :size="16" /> {{ currentAnswer.isCorrect ? '回答正确' : '回答错误' }}
           </div>
           <div class="small">
             你的答案：<strong>{{ answerText(currentAnswer.userAnswer, current.type) }}</strong> ·
@@ -321,16 +321,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
       <div v-if="summary" class="modal-backdrop" @click.self="summary = null">
         <div class="modal">
           <div class="modal-header"><h2>练习完成</h2></div>
-          <div class="grid grid-3" style="margin-bottom: 16px">
-            <div class="card stat-card">
+          <div class="stat-strip summary-stats" style="margin-bottom: 16px">
+            <div class="stat-card">
               <div class="stat-label">已作答</div>
               <div class="stat-value">{{ summary.answeredCount }}</div>
             </div>
-            <div class="card stat-card success">
+            <div class="stat-card success">
               <div class="stat-label">答对</div>
               <div class="stat-value">{{ summary.correctCount }}</div>
             </div>
-            <div class="card stat-card">
+            <div class="stat-card">
               <div class="stat-label">正确率</div>
               <div class="stat-value">{{ summary.accuracy }}%</div>
             </div>

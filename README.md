@@ -54,12 +54,13 @@
 
 | 层 | 技术 |
 | --- | --- |
-| 前端 | Vue 3（Composition API）+ TypeScript + Vite + Vue Router + Pinia + 原生 CSS |
+| 前端 | Vue 3（Composition API）+ TypeScript + Vite + Vue Router + Pinia + Naive UI 2 + Lucide 图标 + 统一 CSS 设计令牌 |
 | 后端 | Cloudflare Workers（TypeScript，模块化路由/中间件/服务/仓储） |
 | 数据库 | Cloudflare D1（SQLite），SQL 迁移文件管理 |
 | 文件存储 | 默认 D1 存文本；可选 R2 保存原始资料 |
 | AI | DeepSeek Chat Completions API（JSON 输出模式），API Key 存 Worker Secret |
 | 部署 | `wrangler deploy`，Worker 同时托管前端静态资源与 `/api/*` |
+| UI 重构 | 见 [docs/UI_REFACTOR.md](docs/UI_REFACTOR.md) 与 [docs/THIRD_PARTY_LICENSES.md](docs/THIRD_PARTY_LICENSES.md) |
 | 测试 | Node 24 内置 `node:test` + `node:sqlite` 驱动的 D1 模拟层，直接调用 Worker 入口 |
 
 ### 为什么测试使用 Node 运行时？

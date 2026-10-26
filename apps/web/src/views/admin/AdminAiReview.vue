@@ -6,6 +6,7 @@ import { difficultyLabel, formatDateTime, statusLabel, typeLabel } from '../../u
 import { useToast } from '../../composables/useToast';
 import LoadingBlock from '../../components/LoadingBlock.vue';
 import PaginationBar from '../../components/PaginationBar.vue';
+import { CheckCircle2 } from '@lucide/vue';
 
 interface EditablePayload {
   type: QuestionType;
@@ -256,7 +257,7 @@ onMounted(load);
 
     <template v-else>
       <div v-if="items.length === 0" class="empty">
-        <div class="empty-icon">🎉</div>
+        <div class="empty-icon"><CheckCircle2 :size="20" /></div>
         <h3>没有需要处理的题目</h3>
         <p class="small">AI 出题后，生成的题目会出现在这里</p>
       </div>

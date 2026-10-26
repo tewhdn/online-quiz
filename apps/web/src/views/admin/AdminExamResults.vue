@@ -6,6 +6,7 @@ import type { ExamResultRow, ExamSummary } from '../../types';
 import { formatDateTime, formatDuration } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
 import LoadingBlock from '../../components/LoadingBlock.vue';
+import { Inbox } from '@lucide/vue';
 
 const route = useRoute();
 const toast = useToast();
@@ -92,7 +93,7 @@ onMounted(load);
           </table>
         </div>
         <div v-if="results.length === 0" class="empty">
-          <div class="empty-icon">📭</div>
+          <div class="empty-icon"><Inbox :size="20" /></div>
           <h3>还没有成绩记录</h3>
           <p class="small">用户完成考试后成绩会显示在这里</p>
         </div>
