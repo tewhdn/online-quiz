@@ -1,6 +1,11 @@
 name = "online-quiz"
 main = "src/index.ts"
 compatibility_date = "2026-08-15"
+workers_dev = true
+
+routes = [
+  { pattern = "exam.shandiana.cn", custom_domain = true }
+]
 
 # 前端构建产物由 Worker 静态资源托管（同源，无需额外 Pages 项目）
 [assets]
@@ -15,7 +20,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "online-quiz"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "76f0d04c-4f11-48a3-af29-6d10806c131e"
 migrations_dir = "migrations"
 
 # 可选：绑定 R2 后，上传的原始资料会额外保存一份到 R2；
@@ -25,7 +30,7 @@ migrations_dir = "migrations"
 # bucket_name = "online-quiz-sources"
 
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"
 APP_NAME = "智能答题系统"
 PASSWORD_ITERATIONS = "100000"
 SESSION_TTL_HOURS = "72"
