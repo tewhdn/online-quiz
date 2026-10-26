@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandMark from '../components/BrandMark.vue';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -67,7 +68,7 @@ async function logout(): Promise<void> {
   <div class="admin-shell">
     <aside class="admin-sidebar" :class="{ open: drawerOpen }" aria-label="管理导航">
       <RouterLink class="brand" to="/admin">
-        <span class="brand-mark">答</span>
+        <BrandMark />
         <span class="brand-text">管理后台</span>
       </RouterLink>
       <nav class="admin-nav">

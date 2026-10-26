@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandMark from '../components/BrandMark.vue';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -57,7 +58,7 @@ const initials = () => (auth.displayName || 'U').slice(0, 1).toUpperCase();
     <header class="topbar">
       <div class="container topbar-inner">
         <RouterLink class="brand" to="/">
-          <span class="brand-mark">答</span>
+          <BrandMark />
           <span class="brand-text">{{ auth.siteName }}</span>
         </RouterLink>
 

@@ -1,0 +1,15 @@
+{
+  "name": "智能答题系统",
+  "short_name": "智能答题",
+  "description": "在线刷题、模拟考试、错题复习与 AI 辅助出题",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#EEF2F9",
+  "theme_color": "#F5EFE3",
+  "icons": [
+    { "src": "/icon-192.png?v=2", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
