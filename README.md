@@ -363,4 +363,8 @@ npm test
 
 ## License
 
-本项目代码可自由用于学习与自建部署；演示题库仅用于格式示例，不代表任何官方考试原题。
+本项目以 **MIT License** 开源，详见 [LICENSE](LICENSE)。
+
+Copyright (c) 2026 Online Quiz contributors
+
+演示题库仅用于格式示例，不代表任何官方考试原题。
