@@ -108,7 +108,10 @@
 }
 ```
 
-完整可导入示例：`workers/api/seeds/demo-questions.json`。
+完整可导入示例：
+
+- `workers/api/seeds/demo-questions.json`（23 道格式示例）
+- `workers/api/seeds/ten-category-it-500.json`（500 道十类信息技术自编题，见 [题库说明](QUESTION_BANK_500.md)）
 
 ## 2. CSV 格式
 

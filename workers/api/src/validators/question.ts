@@ -243,7 +243,8 @@ export async function validateQuestionInput(raw: unknown): Promise<QuestionValid
     if (uniqueKeys.size !== keys.length) errors.push('选项 key 存在重复');
     if (keys.some((key) => !OPTION_KEY_PATTERN.test(key))) errors.push('选项 key 必须是 A-H 之间的字母');
     if (options.some((option) => !option.text)) errors.push('选项内容不能为空');
-    const texts = options.map((option) => option.text.trim().toLowerCase()).filter(Boolean);
+    // 注意：不能忽略大小写。ASCII 题中 'A' 与 'a' 是合法且不同的选项。
+    const texts = options.map((option) => option.text.trim()).filter(Boolean);
     if (new Set(texts).size !== texts.length) errors.push('选项内容存在重复');
 
     const rawAnswer = normalizeChoiceAnswer(record.answer);

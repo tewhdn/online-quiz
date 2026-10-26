@@ -51,8 +51,9 @@ node scripts/create-admin.mjs \
   --username admin \
   --password 'YourPass123'
 
-# 2) 导入演示题库（可选）
-npm run seed:demo
+# 2) 导入题库（可选）
+npm run seed:demo            # 23 道演示题
+npm run seed:ten-category    # 500 道十类信息技术题
 
 # 3) 构建前端
 npm run build

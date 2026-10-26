@@ -30,6 +30,7 @@
 - 邀请码注册、用户名密码登录、修改密码
 - 首页学习数据：今日/累计答题量与正确率、错题数、收藏数、最近考试
 - 九种刷题方式：随机、顺序、按科目、按分类、按知识点、按题型、按难度、错题重练、收藏练习
+- 内置 500 道十类信息技术自编题（单选 300 / 多选 100 / 判断 100），覆盖考纲 8 个模块
 - 提交后由**服务端判分**，返回正确答案与解析；支持收藏、进度恢复、防重复提交
 - 错题本：自动收录、累计答错次数、标记掌握、再次答错自动回到待复习
 - 收藏列表与收藏练习
@@ -97,6 +98,7 @@ online-quiz/
 │   ├── tsconfig.json
 │   └── vite.config.ts
 ├── workers/api/                  # Cloudflare Worker 后端
+│   ├── seeds/                    # 演示题库 + 500 道十类信息技术题库
 │   ├── src/
 │   │   ├── routes/               # 路由（含 admin/）
 │   │   ├── middleware/           # 认证、CSRF、限流
@@ -109,6 +111,7 @@ online-quiz/
 │   │   └── index.ts              # Worker 入口（API + 静态资源）
 │   ├── migrations/0001_init.sql  # 建表、索引、初始配置
 │   ├── seeds/demo-questions.json # 演示题库（23 题）
+│   ├── seeds/ten-category-it-500.json # 十类信息技术题库（500 题）
 │   ├── test/                     # 47 项自动化测试
 │   ├── wrangler.toml
 │   └── package.json
@@ -246,6 +249,18 @@ node scripts/create-admin.mjs --username admin --remote --db online-quiz
 ---
 
 ## 题库导入
+
+项目内置两套种子题库：
+
+- `workers/api/seeds/demo-questions.json`：23 道演示题
+- `workers/api/seeds/ten-category-it-500.json`：**500 道十类信息技术自编题**（见 [题库说明](docs/QUESTION_BANK_500.md)）
+
+一键导入本地库：
+
+```bash
+npm run seed:demo            # 23 道演示题
+npm run seed:ten-category    # 500 道十类信息技术题
+```
 
 支持 JSON 与 CSV，先预览再写入：
 

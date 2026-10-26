@@ -29,6 +29,8 @@
     "questions:validate": "node scripts/validate-questions.mjs",
     "security:check": "node scripts/check-security.mjs",
     "deploy": "npm run build && npm run deploy -w workers/api",
-    "seed:demo": "node scripts/import-questions.mjs workers/api/seeds/demo-questions.json --commit --sqlite workers/api/.local/quiz.sqlite --status published"
+    "seed:demo": "node scripts/import-questions.mjs workers/api/seeds/demo-questions.json --commit --sqlite workers/api/.local/quiz.sqlite --status published",
+    "bank:build": "node scripts/generate-ten-category-it.mjs",
+    "seed:ten-category": "node scripts/import-questions.mjs workers/api/seeds/ten-category-it-500.json --commit --sqlite workers/api/.local/quiz.sqlite --status published"
   }
 }
