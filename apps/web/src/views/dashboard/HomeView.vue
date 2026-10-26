@@ -31,12 +31,12 @@ const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'nume
 
 const maxActivity = computed(() => Math.max(1, ...(stats.value?.dailyActivity ?? []).map((item) => item.answered)));
 
-const quickActions = [
+const quickActions = computed(() => [
   { to: '/practice', icon: PencilLine, label: '开始刷题', sub: '按科目或随机练习' },
   { to: '/exams', icon: FileText, label: '模拟考试', sub: '全真计时模拟' },
   { to: '/mistakes', icon: BookX, label: '错题重练', sub: `待复习 ${stats.value?.wrongCount ?? 0} 道` },
   { to: '/favorites', icon: Star, label: '收藏题目', sub: `${stats.value?.favoriteCount ?? 0} 道收藏` },
-];
+]);
 
 async function load(): Promise<void> {
   loading.value = true;

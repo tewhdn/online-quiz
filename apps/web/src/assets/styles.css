@@ -2011,3 +2011,10 @@ table.table td.actions .btn + .btn {
 .link-btn:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 760px) {
+  .stat-strip .stat-card:last-child {
+    grid-column: 1 / -1;
+    border-right: none;
+  }
+}
