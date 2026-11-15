@@ -3,6 +3,8 @@ import DefaultLayout from '../layouts/DefaultLayout.vue';
 import AdminLayout from '../layouts/AdminLayout.vue';
 import AuthLayout from '../layouts/AuthLayout.vue';
 import { useAuthStore } from '../stores/auth';
+// 首页是最常进的页面，静态引入可省掉一次路由 chunk 往返
+import HomeView from '../views/dashboard/HomeView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -25,7 +27,7 @@ const routes: RouteRecordRaw[] = [
     component: DefaultLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'home', component: () => import('../views/dashboard/HomeView.vue'), meta: { title: '首页' } },
+      { path: '', name: 'home', component: HomeView, meta: { title: '首页' } },
       { path: 'practice', name: 'practice', component: () => import('../views/practice/PracticeSetupView.vue'), meta: { title: '刷题' } },
       {
         path: 'practice/session/:id',

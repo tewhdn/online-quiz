@@ -58,6 +58,8 @@ export interface RequestContext {
   session?: SessionInfo;
   ipHash?: string;
   userAgent?: string;
+  /** Cloudflare ExecutionContext，用于 waitUntil 后台任务 */
+  execCtx?: ExecutionContext;
 }
 
 export type Handler = (ctx: RequestContext) => Promise<Response>;

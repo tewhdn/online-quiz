@@ -12,10 +12,33 @@ import LoadingBlock from '../../components/LoadingBlock.vue';
 import { BookX, FileText, PencilLine, Star } from '@lucide/vue';
 
 const auth = useAuthStore();
-const stats = ref<UserStats | null>(null);
-const announcements = ref<Announcement[]>([]);
-const exams = ref<ExamSummary[]>([]);
-const loading = ref(true);
+
+// 首次进入先用上次的数据渲染（stale-while-revalidate），避免白屏等待接口
+const HOME_CACHE_KEY = 'oq:home-cache:v1';
+interface HomeCache {
+  stats: UserStats | null;
+  announcements: Announcement[];
+  exams: ExamSummary[];
+  savedAt: number;
+}
+
+function readHomeCache(): HomeCache | null {
+  try {
+    const raw = localStorage.getItem(HOME_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as HomeCache;
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+const cached = readHomeCache();
+const stats = ref<UserStats | null>(cached?.stats ?? null);
+const announcements = ref<Announcement[]>(cached?.announcements ?? []);
+const exams = ref<ExamSummary[]>(cached?.exams ?? []);
+const loading = ref(!cached);
 const error = ref('');
 
 const greeting = computed(() => {
@@ -39,7 +62,7 @@ const quickActions = computed(() => [
 ]);
 
 async function load(): Promise<void> {
-  loading.value = true;
+  if (!stats.value) loading.value = true;
   error.value = '';
   try {
     const [statsResult, announcementResult, examResult] = await Promise.all([
@@ -50,8 +73,16 @@ async function load(): Promise<void> {
     stats.value = statsResult.data;
     announcements.value = announcementResult.data;
     exams.value = examResult.data;
+    try {
+      localStorage.setItem(
+        HOME_CACHE_KEY,
+        JSON.stringify({ stats: stats.value, announcements: announcements.value, exams: exams.value, savedAt: Date.now() }),
+      );
+    } catch {
+      // 存储不可用（隐私模式等）时忽略
+    }
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '加载失败';
+    if (!stats.value) error.value = err instanceof Error ? err.message : '加载失败';
   } finally {
     loading.value = false;
   }

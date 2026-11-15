@@ -451,75 +451,71 @@ export interface UserStats {
 
 export async function getUserStats(db: D1Database, userId: string, now: number, tzOffset: number): Promise<UserStats> {
   const dayStart = startOfDay(now, tzOffset);
-  const today = await db
-    .prepare(
-      `SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
-       FROM answer_records WHERE user_id = ? AND created_at >= ?`,
-    )
-    .bind(userId, dayStart)
-    .first<{ answered: number; correct: number | null }>();
-  const total = await db
-    .prepare(
-      `SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
-       FROM answer_records WHERE user_id = ?`,
-    )
-    .bind(userId)
-    .first<{ answered: number; correct: number | null }>();
-  const wrong = await db
-    .prepare(
-      `SELECT COUNT(*) AS total, SUM(CASE WHEN mastered = 0 THEN 1 ELSE 0 END) AS pending
-       FROM wrong_questions WHERE user_id = ?`,
-    )
-    .bind(userId)
-    .first<{ total: number; pending: number | null }>();
-  const favorites = await db
-    .prepare('SELECT COUNT(*) AS c FROM favorites WHERE user_id = ?')
-    .bind(userId)
-    .first<{ c: number }>();
-  const examCount = await db
-    .prepare("SELECT COUNT(*) AS c FROM exam_attempts WHERE user_id = ? AND status != 'in_progress'")
-    .bind(userId)
-    .first<{ c: number }>();
-  const practiceCount = await db
-    .prepare('SELECT COUNT(*) AS c FROM practice_sessions WHERE user_id = ?')
-    .bind(userId)
-    .first<{ c: number }>();
-  const lastExamRow = await db
-    .prepare(
-      `SELECT a.id, a.exam_id, a.score, a.total_score, a.submitted_at, e.title
-       FROM exam_attempts a JOIN exams e ON e.id = a.exam_id
-       WHERE a.user_id = ? AND a.status != 'in_progress'
-       ORDER BY a.submitted_at DESC LIMIT 1`,
-    )
-    .bind(userId)
-    .first<{ id: string; exam_id: string; score: number | null; total_score: number; submitted_at: number | null; title: string }>();
-  const recent = await db
-    .prepare(
-      `SELECT a.id, a.question_id, a.source, a.is_correct, a.created_at, q.stem, q.subject
-       FROM answer_records a JOIN questions q ON q.id = a.question_id
-       WHERE a.user_id = ? ORDER BY a.created_at DESC LIMIT 10`,
-    )
-    .bind(userId)
-    .all<{
-      id: string;
-      question_id: string;
-      source: string;
-      is_correct: number;
-      created_at: number;
-      stem: string;
-      subject: string;
-    }>();
-  const activity = await db
-    .prepare(
-      `SELECT date(created_at / 1000 + ? * 60, 'unixepoch') AS day,
-              COUNT(*) AS answered,
-              SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
-       FROM answer_records
-       WHERE user_id = ? AND created_at >= ?
-       GROUP BY day ORDER BY day ASC`,
-    )
-    .bind(tzOffset, userId, dayStart - 6 * 86_400_000)
-    .all<{ day: string; answered: number; correct: number }>();
+  // 全部合并进一次 D1 batch：9 条查询只走 1 次网络往返。
+  const statements = [
+    db
+      .prepare(
+        `SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
+         FROM answer_records WHERE user_id = ? AND created_at >= ?`,
+      )
+      .bind(userId, dayStart),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
+         FROM answer_records WHERE user_id = ?`,
+      )
+      .bind(userId),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS total, SUM(CASE WHEN mastered = 0 THEN 1 ELSE 0 END) AS pending
+         FROM wrong_questions WHERE user_id = ?`,
+      )
+      .bind(userId),
+    db.prepare('SELECT COUNT(*) AS c FROM favorites WHERE user_id = ?').bind(userId),
+    db.prepare("SELECT COUNT(*) AS c FROM exam_attempts WHERE user_id = ? AND status != 'in_progress'").bind(userId),
+    db.prepare('SELECT COUNT(*) AS c FROM practice_sessions WHERE user_id = ?').bind(userId),
+    db
+      .prepare(
+        `SELECT a.id, a.exam_id, a.score, a.total_score, a.submitted_at, e.title
+         FROM exam_attempts a JOIN exams e ON e.id = a.exam_id
+         WHERE a.user_id = ? AND a.status != 'in_progress'
+         ORDER BY a.submitted_at DESC LIMIT 1`,
+      )
+      .bind(userId),
+    db
+      .prepare(
+        `SELECT a.id, a.question_id, a.source, a.is_correct, a.created_at, q.stem, q.subject
+         FROM answer_records a JOIN questions q ON q.id = a.question_id
+         WHERE a.user_id = ? ORDER BY a.created_at DESC LIMIT 10`,
+      )
+      .bind(userId),
+    db
+      .prepare(
+        `SELECT date(created_at / 1000 + ? * 60, 'unixepoch') AS day,
+                COUNT(*) AS answered,
+                SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS correct
+         FROM answer_records
+         WHERE user_id = ? AND created_at >= ?
+         GROUP BY day ORDER BY day ASC`,
+      )
+      .bind(tzOffset, userId, dayStart - 6 * 86_400_000),
+  ];
+  const [todayRes, totalRes, wrongRes, favoritesRes, examCountRes, practiceCountRes, lastExamRes, recentRes, activityRes] =
+    await db.batch(statements);
+  const firstRow = <T>(result: D1Result<unknown> | undefined): T | undefined =>
+    (result?.results?.[0] as T | undefined) ?? undefined;
+
+  const today = firstRow<{ answered: number; correct: number | null }>(todayRes);
+  const total = firstRow<{ answered: number; correct: number | null }>(totalRes);
+  const wrong = firstRow<{ total: number; pending: number | null }>(wrongRes);
+  const favorites = firstRow<{ c: number }>(favoritesRes);
+  const examCount = firstRow<{ c: number }>(examCountRes);
+  const practiceCount = firstRow<{ c: number }>(practiceCountRes);
+  const lastExamRow = firstRow<{ id: string; exam_id: string; score: number | null; total_score: number; submitted_at: number | null; title: string }>(
+    lastExamRes,
+  );
+  const recent = recentRes as { results?: Array<{ id: string; question_id: string; source: string; is_correct: number; created_at: number; stem: string; subject: string }> };
+  const activity = activityRes as { results?: Array<{ day: string; answered: number; correct: number | null }> };
 
   const todayAnswered = today?.answered ?? 0;
   const todayCorrect = today?.correct ?? 0;
@@ -548,7 +544,7 @@ export async function getUserStats(db: D1Database, userId: string, now: number, 
           submittedAt: lastExamRow.submitted_at,
         }
       : null,
-    recentRecords: (recent.results ?? []).map((row) => ({
+    recentRecords: (recent?.results ?? []).map((row) => ({
       id: row.id,
       questionId: row.question_id,
       source: row.source,
@@ -557,7 +553,7 @@ export async function getUserStats(db: D1Database, userId: string, now: number, 
       stem: row.stem.slice(0, 120),
       subject: row.subject,
     })),
-    dailyActivity: (activity.results ?? []).map((row) => ({
+    dailyActivity: (activity?.results ?? []).map((row) => ({
       date: row.day,
       answered: row.answered,
       correct: row.correct ?? 0,
@@ -639,14 +635,26 @@ function safeArray(value: string): string[] {
 }
 
 export async function favoriteIdsOf(db: D1Database, userId: string, questionIds: string[]): Promise<Set<string>> {
-  const ids = Array.from(new Set(questionIds)).slice(0, 200);
+  const ids = Array.from(new Set(questionIds));
   if (ids.length === 0) return new Set();
-  const placeholders = ids.map(() => '?').join(',');
-  const rows = await db
-    .prepare(`SELECT question_id FROM favorites WHERE user_id = ? AND question_id IN (${placeholders})`)
-    .bind(userId, ...ids)
-    .all<{ question_id: string }>();
-  return new Set((rows.results ?? []).map((row) => row.question_id));
+  // D1 单条语句最多绑定 100 个参数：user_id 占 1 个，question_id 每片最多 90 个。
+  const CHUNK = 90;
+  const statements = [];
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const placeholders = chunk.map(() => '?').join(',');
+    statements.push(
+      db
+        .prepare(`SELECT question_id FROM favorites WHERE user_id = ? AND question_id IN (${placeholders})`)
+        .bind(userId, ...chunk),
+    );
+  }
+  const out = new Set<string>();
+  const results = (await db.batch(statements)) as Array<{ results?: Array<{ question_id: string }> }>;
+  for (const result of results) {
+    for (const row of result.results ?? []) out.add(row.question_id);
+  }
+  return out;
 }
 
 export async function listRecentAnswers(

@@ -26,7 +26,9 @@ export class NodeD1Database {
     const results = [];
     try {
       for (const statement of statements) {
-        results.push(statement.runSync());
+        const sql = String(statement.sql ?? '').trim();
+        const isQuery = /^(select|with|pragma|explain)\b/i.test(sql);
+        results.push(isQuery ? statement.allSync() : statement.runSync());
       }
       this.db.exec('COMMIT');
       return results;
@@ -87,11 +89,15 @@ class NodeD1Statement {
     return row;
   }
 
-  async all(...values) {
+  allSync(values = []) {
     const params = values.length > 0 ? normalizeParams(values) : this.params;
     const statement = this.db.prepare(this.sql);
     const rows = statement.all(...params);
     return { success: true, results: rows, meta: { changes: 0 } };
+  }
+
+  async all(...values) {
+    return this.allSync(values);
   }
 
   async run(...values) {

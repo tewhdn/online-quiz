@@ -122,14 +122,18 @@ export async function listQuestions(
   publicOnly: boolean,
 ): Promise<{ items: QuestionRecord[]; total: number }> {
   const { sql: whereSql, params } = buildWhere(filters, publicOnly);
-  const totalRow = await db.prepare(`SELECT COUNT(*) AS c FROM questions q ${whereSql}`).bind(...params).first<{ c: number }>();
   const order =
     filters.sort === 'oldest' ? 'q.created_at ASC' : filters.sort === 'difficulty' ? 'q.difficulty ASC, q.created_at DESC' : 'q.created_at DESC';
-  const rows = await db
-    .prepare(`SELECT q.* FROM questions q ${whereSql} ORDER BY ${order} LIMIT ? OFFSET ?`)
-    .bind(...params, filters.pageSize, filters.offset)
-    .all<QuestionRow>();
-  return { total: totalRow?.c ?? 0, items: (rows.results ?? []).map(mapQuestion) };
+  // COUNT 与列表一次 batch 发出，少一次 D1 往返
+  const [totalRes, rowsRes] = await db.batch([
+    db.prepare(`SELECT COUNT(*) AS c FROM questions q ${whereSql}`).bind(...params),
+    db
+      .prepare(`SELECT q.* FROM questions q ${whereSql} ORDER BY ${order} LIMIT ? OFFSET ?`)
+      .bind(...params, filters.pageSize, filters.offset),
+  ]);
+  const totalRow = (totalRes?.results?.[0] as { c: number } | undefined) ?? undefined;
+  const rows = rowsRes as { results?: QuestionRow[] };
+  return { total: totalRow?.c ?? 0, items: (rows?.results ?? []).map(mapQuestion) };
 }
 
 export async function findQuestionById(db: D1Database, id: string, includeDeleted = false): Promise<QuestionRecord | null> {

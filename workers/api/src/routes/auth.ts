@@ -14,13 +14,22 @@ import {
 } from '../services/auth-service.ts';
 import { enforceRateLimit } from '../middleware/rate-limit.ts';
 import { getSetting } from '../repositories/content-repo.ts';
+import { withEdgeCache } from '../utils/edge-cache.ts';
 import type { RequestContext } from '../types/env.ts';
 
 export function registerAuthRoutes(router: Router): void {
   router.get('/api/v1/meta', async (ctx) => {
-    const siteName = (await getSetting(ctx.env.DB, 'site_name')) ?? ctx.env.APP_NAME ?? '智能答题系统';
-    const aiEnabled = (await getSetting(ctx.env.DB, 'ai_enabled')) === 'true';
-    return jsonOk({ siteName, aiEnabled, version: '1.0.0' });
+    // 公共只读数据：边缘缓存 60s，命中后不再查库
+    return withEdgeCache(ctx.req, ctx.execCtx, 60, async () => {
+      const rows = await ctx.env.DB.prepare("SELECT key, value FROM system_settings WHERE key IN ('site_name', 'ai_enabled')").all<{
+        key: string;
+        value: string;
+      }>();
+      const settings = new Map((rows.results ?? []).map((row) => [row.key, row.value]));
+      const siteName = settings.get('site_name') ?? ctx.env.APP_NAME ?? '智能答题系统';
+      const aiEnabled = settings.get('ai_enabled') === 'true';
+      return jsonOk({ siteName, aiEnabled, version: '1.0.0' });
+    });
   });
 
   router.post(

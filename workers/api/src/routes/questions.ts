@@ -10,6 +10,7 @@ import {
   listCategories,
   submitAnswer,
 } from '../services/question-service.ts';
+import { withEdgeCache } from '../utils/edge-cache.ts';
 import type { RequestContext } from '../types/env.ts';
 
 function requiredUser(ctx: RequestContext) {
@@ -19,14 +20,13 @@ function requiredUser(ctx: RequestContext) {
 
 export function registerQuestionRoutes(router: Router): void {
   router.get('/api/v1/questions/filters', async (ctx) => {
-    const options = await filterOptions(ctx.env.DB);
-    return jsonOk(options);
+    // 筛选项/分类计数对所有用户一致：边缘缓存 60s
+    return withEdgeCache(ctx.req, ctx.execCtx, 60, async () => jsonOk(await filterOptions(ctx.env.DB)));
   }, { auth: true });
 
   router.get('/api/v1/categories', async (ctx) => {
     const subject = ctx.url.searchParams.get('subject') ?? undefined;
-    const categories = await listCategories(ctx.env.DB, subject);
-    return jsonOk(categories);
+    return withEdgeCache(ctx.req, ctx.execCtx, 120, async () => jsonOk(await listCategories(ctx.env.DB, subject)));
   }, { auth: true });
 
   router.get('/api/v1/questions', async (ctx) => {
