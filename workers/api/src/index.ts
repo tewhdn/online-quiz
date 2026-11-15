@@ -18,6 +18,7 @@ import { registerFavoriteRoutes } from './routes/favorites.ts';
 import { registerExamRoutes } from './routes/exams.ts';
 import { registerAnnouncementRoutes } from './routes/announcements.ts';
 import { registerAdminRoutes } from './routes/admin/index.ts';
+import { registerAiExplainRoutes } from './routes/ai-explain.ts';
 import type { Env, RequestContext } from './types/env.ts';
 
 export const VERSION = '1.0.0';
@@ -54,8 +55,9 @@ registerFavoriteRoutes(router);
 registerExamRoutes(router);
 registerAnnouncementRoutes(router);
 registerAdminRoutes(router);
+registerAiExplainRoutes(router);
 
-async function handleApi(request: Request, env: Env, url: URL): Promise<Response> {
+async function handleApi(request: Request, env: Env, url: URL, execCtx: ExecutionContext): Promise<Response> {
   const requestId = newId('req');
   try {
     if (request.method === 'OPTIONS') {
@@ -120,6 +122,7 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
       session: session ?? undefined,
       ipHash,
       userAgent: request.headers.get('user-agent') ?? undefined,
+      execCtx,
     };
 
     const response = await matched.handler(ctx);
@@ -127,13 +130,13 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     response.headers.set('X-Content-Type-Options', 'nosniff');
     if (config.isProduction) response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-    // 抽样清理过期限流记录（约 1% 请求）
+    // 抽样清理过期限流记录（约 1% 请求）：不阻塞响应
     if (Math.random() < 0.01) {
-      try {
-        await Promise.all([pruneRateLimits(env.DB, Date.now()), deleteExpiredSessions(env.DB, Date.now())]);
-      } catch {
-        // 清理失败不影响主流程
-      }
+      execCtx.waitUntil(
+        Promise.all([pruneRateLimits(env.DB, Date.now()), deleteExpiredSessions(env.DB, Date.now())]).catch(() => {
+          // 清理失败不影响主流程
+        }),
+      );
     }
     return response;
   } catch (error) {
@@ -148,10 +151,10 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
 }
 
 export default {
-  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, execCtx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
-      return handleApi(request, env, url);
+      return handleApi(request, env, url, execCtx);
     }
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);

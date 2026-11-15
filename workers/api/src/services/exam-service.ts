@@ -5,6 +5,7 @@ import { toCsv } from '../utils/csv.ts';
 import { gradeAnswer, normalizeBooleanAnswer } from '../validators/question.ts';
 import { validateExamInput, examTotalScore, type ExamInput } from '../validators/exam.ts';
 import * as examRepo from '../repositories/exam-repo.ts';
+import { aiHelpQuestionIdsForAttempt } from '../repositories/ai-help-repo.ts';
 import * as questions from '../repositories/question-repo.ts';
 import { writeAudit } from '../repositories/content-repo.ts';
 import type { AuthUser } from '../types/env.ts';
@@ -581,6 +582,8 @@ interface StoredResultDetail {
     flagged: boolean;
     correctAnswer: string[];
     explanation: string;
+    /** 本题在考试中用过 AI 讲解，按规则不计分 */
+    aiAssisted?: boolean;
   }>;
 }
 
@@ -615,6 +618,8 @@ async function finalizeAttempt(
     examRepo.listAttemptAnswers(db, attempt.id),
   ]);
   const answerMap = new Map(savedAnswers.map((item) => [item.examQuestionId, item]));
+  // 本场考试中用过 AI 讲解的题：一律不计分
+  const aiHelpQuestionIds = await aiHelpQuestionIdsForAttempt(db, attempt.id);
 
   const byType: StoredResultDetail['byType'] = {};
   const knowledgeMap = new Map<string, { total: number; correct: number }>();
@@ -629,7 +634,8 @@ async function finalizeAttempt(
     const saved = answerMap.get(item.id);
     const userAnswer = saved?.userAnswer ?? [];
     const answered = userAnswer.length > 0;
-    const isCorrect = answered && gradeAnswer(item.snapshot.type, item.snapshot.answer, userAnswer);
+    const aiAssisted = aiHelpQuestionIds.has(item.questionId);
+    const isCorrect = !aiAssisted && answered && gradeAnswer(item.snapshot.type, item.snapshot.answer, userAnswer);
     const gained = isCorrect ? item.score : 0;
     if (!answered) unansweredCount += 1;
     else if (isCorrect) correctCount += 1;
@@ -667,10 +673,13 @@ async function finalizeAttempt(
       flagged: saved?.flagged ?? false,
       correctAnswer: item.snapshot.answer,
       explanation: item.snapshot.explanation,
+      aiAssisted,
     });
   }
 
   if (grades.length > 0) await examRepo.finalizeAttemptGrades(db, attempt.id, grades);
+
+  // 错题本已在「询问 AI 时」写入，这里不再重复计次
 
   const submittedAt = nowMs();
   const durationSeconds = secondsBetween(attempt.startedAt, submittedAt);
@@ -755,6 +764,7 @@ export async function getAttemptResult(
       flagged: item.flagged,
       correctAnswer: reviewAllowed ? item.correctAnswer : null,
       explanation: reviewAllowed ? item.explanation : null,
+      aiAssisted: item.aiAssisted ?? false,
     })),
   };
 }

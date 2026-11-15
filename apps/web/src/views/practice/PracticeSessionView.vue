@@ -7,6 +7,7 @@ import { ApiClientError } from '../../api/client';
 import type { PracticeSessionView } from '../../types';
 import { answerText, difficultyLabel, modeLabel, typeLabel } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
+import { useAiPetStore } from '../../stores/aiPet';
 import QuestionOptions from '../../components/QuestionOptions.vue';
 import ProgressBar from '../../components/ProgressBar.vue';
 import ConfirmDialog from '../../components/ConfirmDialog.vue';
@@ -25,6 +26,7 @@ interface AnswerInfo {
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
+const aiPet = useAiPetStore();
 
 const view = ref<PracticeSessionView | null>(null);
 const loading = ref(true);
@@ -54,6 +56,28 @@ function applyAnswers(list: AnswerInfo[]): void {
   for (const item of list) map[item.questionId] = item;
   answers.value = map;
 }
+
+// 当前题切换时同步给 AI 桌宠；退出页面清空
+watch(
+  () => sessionId.value,
+  () => {
+    aiPet.setScene(sessionId.value ? { kind: 'practice', sessionId: sessionId.value } : null);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => current.value?.id,
+  () => {
+    const question = current.value;
+    aiPet.setQuestion(question ? { id: question.id, stem: question.stem ?? '' } : null);
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => {
+  aiPet.resetQuestion();
+});
 
 function syncSelected(): void {
   const question = current.value;

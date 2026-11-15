@@ -17,6 +17,7 @@ import {
   User,
 } from '@lucide/vue';
 import BrandMark from '../components/BrandMark.vue';
+import AiPet from '../components/AiPet.vue';
 import { useAuthStore } from '../stores/auth';
 import { useTheme } from '../composables/useTheme';
 import { useToast } from '../composables/useToast';
@@ -123,5 +124,7 @@ const initials = () => (auth.displayName || 'U').slice(0, 1).toUpperCase();
         <span>我的</span>
       </RouterLink>
     </nav>
+
+    <AiPet />
   </div>
 </template>

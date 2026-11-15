@@ -131,6 +131,7 @@ onMounted(load);
               <span class="badge" :class="item.isCorrect ? 'badge-success' : item.answered ? 'badge-danger' : 'badge-warning'">
                 {{ item.isCorrect ? '正确' : item.answered ? '错误' : '未作答' }}
               </span>
+              <span v-if="item.aiAssisted" class="badge badge-warning">AI 辅助 · 不计分</span>
               <span class="tiny muted">第 {{ item.position }} 题</span>
             </div>
             <p class="question-stem" style="font-size: 1rem">{{ item.stem }}</p>

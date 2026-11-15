@@ -302,6 +302,8 @@ export interface AttemptResult {
     flagged: boolean;
     correctAnswer: string[] | null;
     explanation: string | null;
+    /** 本题考试中使用过 AI 讲解，按规则不计分 */
+    aiAssisted?: boolean;
   }>;
 }
 

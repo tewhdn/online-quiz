@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { examApi } from '../../api';
 import { ApiClientError } from '../../api/client';
 import type { AttemptResult, ExamPaper } from '../../types';
 import { answerText, formatDuration, typeLabel } from '../../utils/format';
 import { useToast } from '../../composables/useToast';
+import { useAiPetStore } from '../../stores/aiPet';
 import QuestionOptions from '../../components/QuestionOptions.vue';
 import ConfirmDialog from '../../components/ConfirmDialog.vue';
 import LoadingBlock from '../../components/LoadingBlock.vue';
@@ -14,6 +15,7 @@ import { Flag } from '@lucide/vue';
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
+const aiPet = useAiPetStore();
 
 const attemptId = computed(() => String(route.params.id ?? ''));
 const paper = ref<ExamPaper | null>(null);
@@ -191,11 +193,26 @@ async function load(): Promise<void> {
 }
 
 onMounted(() => {
+  aiPet.setScene({ kind: 'exam', attemptId: attemptId.value });
   load();
   window.addEventListener('beforeunload', beforeUnload);
 });
 
+// 当前考试题同步给桌宠（考试中询问 AI 会自动带上题目，且本题不计分）
+watch(
+  () => paper.value?.questions[current.value]?.questionId,
+  () => {
+    const item = paper.value?.questions[current.value];
+    if (!item) return;
+    aiPet.setScene({ kind: 'exam', attemptId: attemptId.value });
+    aiPet.setQuestion({ id: item.questionId, stem: item.stem });
+  },
+  { immediate: true },
+);
+
 onBeforeUnmount(() => {
+  aiPet.resetQuestion();
+  aiPet.setScene(null);
   if (tickTimer) window.clearInterval(tickTimer);
   for (const timer of saveTimers.values()) window.clearTimeout(timer);
   window.removeEventListener('beforeunload', beforeUnload);
