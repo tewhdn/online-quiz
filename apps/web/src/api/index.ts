@@ -1,4 +1,4 @@
-import { request, download, saveBlob, getCsrfToken, ApiClientError } from './client';
+import { request, download, saveBlob } from './client';
 import type {
   AdminQuestion,
   AdminStats,
@@ -287,9 +287,6 @@ export const adminApi = {
     request<{ updated: boolean }>('/admin/settings', { method: 'PUT', body }),
 };
 
-export { ApiClientError } from './client';
-export { saveBlob } from './client';
-
 export interface AiExplainInput {
   questionId?: string;
   questionText?: string;
@@ -302,65 +299,16 @@ export interface AiExplainInput {
   sessionId?: string;
 }
 
-/** 学生端 AI 解答：SSE 流式返回，逐段回调 onDelta */
+export interface AiExplainResult {
+  text: string;
+  demo: boolean;
+  assist: 'wrongbook' | 'exam_void' | 'none';
+}
+
+/** 学生端 AI 解答：一次返回完整文本，打字机动画在前端本地做 */
 export const aiPetApi = {
-  async explainStream(
-    body: AiExplainInput,
-    onDelta: (text: string) => void,
-    signal?: AbortSignal,
-  ): Promise<{ demo: boolean; assist: 'wrongbook' | 'exam_void' | 'none' }> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'text/event-stream' };
-    const csrf = getCsrfToken();
-    if (csrf) headers['X-CSRF-Token'] = csrf;
-
-    const response = await fetch('/api/v1/ai/explain', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      credentials: 'same-origin',
-      signal,
-    });
-
-    if (!response.ok || !response.body) {
-      let message = 'AI 服务暂时不可用，请稍后再试';
-      try {
-        const payload = (await response.json()) as { error?: { message?: string } };
-        if (payload?.error?.message) message = payload.error.message;
-      } catch {
-        // keep default message
-      }
-      throw new ApiClientError(message, 'AI_EXPLAIN_FAILED', response.status);
-    }
-
-    const demo = response.headers.get('X-AI-Mode') === 'demo';
-    const assistHeader = response.headers.get('X-AI-Assist');
-    const assist = assistHeader === 'exam_void' ? 'exam_void' : assistHeader === 'wrongbook' ? 'wrongbook' : 'none';
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line.startsWith('data:')) continue;
-        const payload = line.slice(5).trim();
-        if (!payload) continue;
-        let event: { type?: string; text?: string; message?: string } | null = null;
-        try {
-          event = JSON.parse(payload);
-        } catch {
-          continue;
-        }
-        if (!event) continue;
-        if (event.type === 'delta' && typeof event.text === 'string') onDelta(event.text);
-        else if (event.type === 'error') throw new ApiClientError(event.message ?? 'AI 输出中断', 'AI_STREAM_ERROR', 0);
-      }
-    }
-    return { demo, assist };
-  },
+  explain: (body: AiExplainInput) => request<AiExplainResult>('/ai/explain', { method: 'POST', body }),
 };
+
+export { ApiClientError } from './client';
+export { saveBlob } from './client';

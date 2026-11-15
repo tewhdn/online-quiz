@@ -1,12 +1,13 @@
 import type { Router } from '../router.ts';
 import { ApiError } from '../utils/errors.ts';
 import { readJsonBody } from '../utils/http.ts';
+import { jsonOk } from '../utils/response.ts';
 import { loadConfig } from '../utils/config.ts';
 import { findQuestionById } from '../repositories/question-repo.ts';
 import { findAttempt, listExamSetQuestions } from '../repositories/exam-repo.ts';
 import { upsertWrongQuestion } from '../repositories/practice-repo.ts';
 import { recordAiHelp } from '../repositories/ai-help-repo.ts';
-import { streamExplain } from '../services/ai-explain-service.ts';
+import { explain } from '../services/ai-explain-service.ts';
 import { nowMs } from '../utils/time.ts';
 import { newId } from '../utils/id.ts';
 
@@ -23,7 +24,7 @@ function normalizeAnswer(value: unknown): string[] | undefined {
 }
 
 export function registerAiExplainRoutes(router: Router): void {
-  // 学生端「让鲸鱼娘讲讲」：流式返回讲解（题目或自由提问）
+  // 学生端「让鲸鱼娘讲讲」：返回完整讲解文本（前端本地做打字机动画）
   router.post(
     '/api/v1/ai/explain',
     async (ctx) => {
@@ -83,7 +84,6 @@ export function registerAiExplainRoutes(router: Router): void {
           sessionId: sessionId || null,
           now,
         });
-        // 进入错题本（待复习），已掌握状态会被重置回待复习
         await upsertWrongQuestion(ctx.env.DB, {
           id: newId('wq'),
           userId: ctx.user.id,
@@ -93,7 +93,7 @@ export function registerAiExplainRoutes(router: Router): void {
         });
       }
 
-      const { stream, demo } = await streamExplain(config, {
+      const { text, demo } = await explain(config, {
         question: question ?? undefined,
         questionText: question ? undefined : questionText,
         userAnswer: normalizeAnswer(body.userAnswer),
@@ -101,15 +101,7 @@ export function registerAiExplainRoutes(router: Router): void {
         followUp,
       });
 
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-store',
-          'X-Accel-Buffering': 'no',
-          'X-AI-Mode': demo ? 'demo' : 'live',
-          'X-AI-Assist': question ? assist : 'none',
-        },
-      });
+      return jsonOk({ text, demo, assist: question ? assist : 'none' });
     },
     { auth: true, rateLimit: { key: 'ai-explain', limit: 20, windowSeconds: 60 } },
   );

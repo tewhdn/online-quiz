@@ -79,21 +79,45 @@ export const useAiPetStore = defineStore('aiPet', () => {
     if (question.value) question.value = { ...question.value, userAnswer };
   }
 
+  let typingTimer: ReturnType<typeof setInterval> | null = null;
+
+  function cancelTyping(): void {
+    if (typingTimer) {
+      clearInterval(typingTimer);
+      typingTimer = null;
+    }
+  }
+
+  /** 本地打字机动画：把服务端返回的全文逐字显示出来 */
+  function typeOut(message: AiPetMessage, full: string): Promise<void> {
+    cancelTyping();
+    return new Promise((resolve) => {
+      let index = 0;
+      const step = Math.max(2, Math.ceil(full.length / 90));
+      message.text = '';
+      typingTimer = setInterval(() => {
+        index = Math.min(full.length, index + step);
+        message.text = full.slice(0, index);
+        if (index >= full.length) {
+          cancelTyping();
+          resolve();
+        }
+      }, 18);
+    });
+  }
+
   async function run(input: AiExplainInput, userText?: string): Promise<void> {
     if (busy.value) return;
     busy.value = true;
     demoMode.value = false;
     if (userText) pushMessage('user', userText);
     const answer = pushMessage('pet', '');
-    answer.text = '';
     try {
-      const { demo, assist } = await aiPetApi.explainStream({ ...contextFields(), ...input }, (text) => {
-        answer.text += text;
-      });
-      demoMode.value = demo;
-      lastAssist.value = assist;
+      const { data } = await aiPetApi.explain({ ...contextFields(), ...input });
+      demoMode.value = data.demo;
+      lastAssist.value = data.assist;
       assistSeq.value += 1;
-      if (!answer.text) answer.text = '（没有收到内容，请再试一次）';
+      await typeOut(answer, data.text || '（没有收到内容，请再试一次）');
     } catch (error) {
       answer.text = error instanceof Error ? error.message : '出错了，请稍后再试';
     } finally {

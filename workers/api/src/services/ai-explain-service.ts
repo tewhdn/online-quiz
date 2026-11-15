@@ -30,11 +30,8 @@ export function buildMessages(input: ExplainInput): Array<{ role: 'system' | 'us
   if (input.question) {
     const q = input.question;
     const chosen = new Set(input.userAnswer ?? []);
-    const optionLines = q.options
-      .map((option: QuestionOption) => `${option.key}. ${option.text}${chosen.has(option.key) ? '（学生选了这项）' : ''}`)
-      .join('\n');
     parts.push(`【题目】${q.stem}`);
-    parts.push(`【选项】\n${optionLines}`);
+    parts.push(`【选项】\n${q.options.map((option: QuestionOption) => `${option.key}. ${option.text}${chosen.has(option.key) ? '（学生选了这项）' : ''}`).join('\n')}`);
     parts.push(`【正确答案】${q.answer.join(', ')}`);
     if (q.explanation) parts.push(`【题库解析参考】${q.explanation}`);
     if (q.knowledgePoints.length) parts.push(`【知识点】${q.knowledgePoints.join('、')}`);
@@ -48,10 +45,6 @@ export function buildMessages(input: ExplainInput): Array<{ role: 'system' | 'us
     { role: 'system', content: PERSONA },
     { role: 'user', content: parts.join('\n\n') },
   ];
-}
-
-function sseLine(payload: unknown): string {
-  return `data: ${JSON.stringify(payload)}\n\n`;
 }
 
 /** 无 Key / 关闭时的演示输出：用题库解析兜底，保证前端交互可验收。 */
@@ -70,108 +63,53 @@ function demoText(input: ExplainInput): string {
   return '（演示模式：当前未配置 DeepSeek API Key，配置后我就能真正回答你的问题啦）';
 }
 
-/** 把 DeepSeek 的流式响应转换成前端 SSE：{"type":"delta"|"done"|"error"} */
-function toClientStream(upstream: Response, onDone: () => void): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder();
-  const reader = upstream.body!.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  return new ReadableStream<Uint8Array>({
-    async pull(out) {
-      try {
-        const { done, value } = await reader.read();
-        if (done) {
-          onDone();
-          out.enqueue(encoder.encode(sseLine({ type: 'done' })));
-          out.close();
-          return;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-        for (const rawLine of lines) {
-          const line = rawLine.trim();
-          if (!line.startsWith('data:')) continue;
-          const payload = line.slice(5).trim();
-          if (!payload || payload === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> };
-            const text = parsed.choices?.[0]?.delta?.content;
-            if (text) out.enqueue(encoder.encode(sseLine({ type: 'delta', text })));
-          } catch {
-            // 忽略心跳等非 JSON 行
-          }
-        }
-      } catch {
-        onDone();
-        out.enqueue(encoder.encode(sseLine({ type: 'error', message: 'AI 输出中断，请重试' })));
-        out.close();
-      }
-    },
-    cancel() {
-      onDone();
-      reader.cancel().catch(() => undefined);
-    },
-  });
-}
-
-export interface StreamResult {
-  stream: ReadableStream<Uint8Array>;
+export interface ExplainResult {
+  text: string;
   demo: boolean;
 }
 
-export async function streamExplain(config: AppConfig, input: ExplainInput): Promise<StreamResult> {
-  const encoder = new TextEncoder();
+/**
+ * 非流式调用 DeepSeek，一次拿回全文。
+ * 前端拿到文本后本地做打字机动画，避免依赖 Workers 的流式转发。
+ */
+export async function explain(config: AppConfig, input: ExplainInput): Promise<ExplainResult> {
   if (!config.deepseekApiKey || !config.aiEnabled) {
-    // 演示模式：把兜底解析按字符分片推送，方便验收打字机效果
-    const full = demoText(input);
-    let cursor = 0;
-    const demo = new ReadableStream<Uint8Array>({
-      async pull(controller) {
-        await new Promise((resolve) => setTimeout(resolve, 18));
-        if (cursor >= full.length) {
-          controller.enqueue(encoder.encode(sseLine({ type: 'done', demo: true })));
-          controller.close();
-          return;
-        }
-        const chunk = full.slice(cursor, cursor + 6);
-        cursor += chunk.length;
-        controller.enqueue(encoder.encode(sseLine({ type: 'delta', text: chunk })));
-      },
-    });
-    return { stream: demo, demo: true };
+    return { text: demoText(input), demo: true };
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), config.aiTimeoutMs);
-  let upstream: Response;
+  const timer = setTimeout(() => controller.abort(), Math.min(config.aiTimeoutMs, 45_000));
   try {
-    upstream = await fetch(`${config.deepseekBaseUrl}/chat/completions`, {
+    const response = await fetch(`${config.deepseekBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.deepseekApiKey}`,
         'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         model: config.deepseekModel,
         messages: buildMessages(input),
-        stream: true,
+        stream: false,
         temperature: 0.5,
         max_tokens: 600,
       }),
       signal: controller.signal,
     });
-  } catch {
-    clearTimeout(timer);
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw ApiError.serviceUnavailable(`AI 服务返回异常（${response.status}）${detail ? `：${detail.slice(0, 120)}` : ''}`);
+    }
+    const payload = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const text = payload.choices?.[0]?.message?.content?.trim();
+    if (!text) throw ApiError.serviceUnavailable('AI 没有返回内容，请稍后重试');
+    return { text, demo: false };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
     throw ApiError.serviceUnavailable('AI 服务暂时不可用，请稍后重试');
-  }
-
-  if (!upstream.ok || !upstream.body) {
+  } finally {
     clearTimeout(timer);
-    const detail = await upstream.text().catch(() => '');
-    throw ApiError.serviceUnavailable(`AI 服务返回异常（${upstream.status}）${detail ? `：${detail.slice(0, 120)}` : ''}`);
   }
-
-  return { stream: toClientStream(upstream, () => clearTimeout(timer)), demo: false };
 }
